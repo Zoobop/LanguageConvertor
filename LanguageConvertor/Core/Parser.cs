@@ -1,5 +1,6 @@
 ﻿using LanguageConvertor.Languages;
 using LanguageConvertor.Modifiers;
+using System.Reflection;
 
 namespace LanguageConvertor.Core;
 
@@ -14,7 +15,7 @@ public class Parser
     
     public List<string> GetImports()
     {
-        return (from line in _data where IsImport(line) select line.Substring(6, line.Length - 7)).ToList();
+        return (from line in _data where IsImport(line) select line[6..^1]).ToList();
     }
 
     public ContainerSettings GetContainer(ConvertibleLanguage language)
@@ -45,6 +46,7 @@ public class Parser
             var (name, modifiers) = ParseClassModifiers(line);
             classes.Add(name, modifiers);
         }
+
         return classes;
     }
     
@@ -98,6 +100,15 @@ public class Parser
         if (split.Length <= 0) return false;
         var hasAccess = CheckAccessModifier(split.First());
         return !IsContainer(line) && !IsClass(line) && !IsMethod(line) && hasAccess;
+    }
+    public static bool IsProperty(string line)
+    {
+        if (!(line.Contains('{') && line.Contains('}'))) return false;
+
+        var split = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var hasAccess = CheckAccessModifier(split.First());
+
+        return !IsMember(line) && hasAccess;
     }
     public static bool IsScope(string line, bool begin)
     {
@@ -348,6 +359,11 @@ public class Parser
         }
 
         return (name.TrimEnd(';'), new(access, special, type, value.TrimEnd(';')));
+    }
+
+    private (string, PropertyModifiers)? ParsePropertyModifiers(string line)
+    {
+        return null;
     }
 
     private static bool CheckAccessModifier(string text)

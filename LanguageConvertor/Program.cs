@@ -1,13 +1,7 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using LanguageConvertor.Components;
 using LanguageConvertor.Core;
 
-var convertor = new Convertor(@"C:\dev\CSharp\LanguageConvertor\LanguageConvertor\Example.cs", ConvertibleLanguage.Cpp);
+const string lineData = "public static int Number = 0;";
 
-convertor.NewFile(@"C:\Users\Brandon\OneDrive\Desktop\Code\Converted");
-
-/*var convertedData = convertor.GetConvertedData();
-
-foreach (var line in convertedData)
-{
-    Console.WriteLine(line);
-}*/
+var field = FieldComponent.Parse(lineData);
+Console.WriteLine(field.Name);

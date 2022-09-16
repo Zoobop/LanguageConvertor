@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Compile Remove="Example.cs" />
+      <Folder Include="Tests\Output\" />
     </ItemGroup>
 
 </Project>
