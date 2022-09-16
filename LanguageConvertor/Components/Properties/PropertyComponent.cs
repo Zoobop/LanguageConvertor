@@ -6,13 +6,17 @@ using System.Threading.Tasks;
 
 namespace LanguageConvertor.Components;
 
-internal struct FieldComponent : IComponent<FieldComponent>
+internal struct PropertyComponent : IComponent<PropertyComponent>
 {
     public string? AccessModifier { get; set; }
     public string? SpecialModifier { get; set; }
     public string? Type { get; set; }
     public string? Name { get; set; }
     public string? Value { get; set; }
+
+    public bool CanRead { get; }
+    public bool CanWrite { get; }
+    public string? WriteAccessModifer { get; set; }
 
     public bool IsConst { get => SpecialModifier == "const"; }
     public bool IsStatic { get => SpecialModifier == "static"; }
@@ -21,21 +25,28 @@ internal struct FieldComponent : IComponent<FieldComponent>
     public bool IsProtected { get => AccessModifier == "protected"; }
     public bool HasValue { get => string.IsNullOrEmpty(Value); }
 
-    public FieldComponent(string? accessModifier, string? specialModifier, string? type, string? name, string? value)
+    public PropertyComponent(string? accessModifier, string? specialModifier, string? type, string? name, string? value, bool canRead, bool canWrite, string? writeAccessModifier)
     {
         AccessModifier = accessModifier;
         SpecialModifier = specialModifier;
         Type = type;
         Name = name;
         Value = value;
+
+        CanRead = canRead;
+        CanWrite = canWrite;
+        WriteAccessModifer = writeAccessModifier;
     }
 
-    public static FieldComponent Parse(string fieldLine)
+    public static PropertyComponent Parse(string propertyLine)
     {
-        var span = fieldLine.AsSpan();
+        var span = propertyLine.AsSpan();
 
         var accessor = string.Empty;
         var special = string.Empty;
+        var canRead = false;
+        var canWrite = false;
+        var writeAccessModifier = string.Empty;
         var value = string.Empty;
 
         // Try get accessor
@@ -71,6 +82,34 @@ internal struct FieldComponent : IComponent<FieldComponent>
         //Console.WriteLine($"[{name}]");
         span = span[nameIndex..];
 
+        // Try get getter
+        var getterIndex = span.IndexOf('g');
+        if (getterIndex != -1)
+        {
+            canRead = true;
+            var nextIndex = getterIndex + 5;
+            span = span[nextIndex..];
+            //Console.WriteLine($"[{canRead}]");
+        }
+
+        // Try get write accessor
+        var hasWriteAccess = span.StartsWith("public") || span.StartsWith("private") || span.StartsWith("protected");
+        if (hasWriteAccess)
+        {
+            var length = span.IndexOf(' ');
+            writeAccessModifier = span[..length++].ToString();
+            //Console.WriteLine($"[{writeAccessModifier}]");
+            span = span[length..];
+        }
+
+        // Try get setter
+        var setterIndex = span.IndexOf('s');
+        if (setterIndex != -1)
+        {
+            canWrite = true;
+            //Console.WriteLine($"[{canWrite}]");
+        }
+
         // Try get value
         var valueIndex = span.IndexOf('=');
         if (valueIndex != -1)
@@ -80,11 +119,11 @@ internal struct FieldComponent : IComponent<FieldComponent>
             //Console.WriteLine($"[{value}]");
         }
 
-        return new FieldComponent(accessor, special, type, name, value);
+        return new PropertyComponent(accessor, special, type, name, value, canRead, canWrite, writeAccessModifier);
     }
 
     public override string ToString()
     {
-        return $"[{AccessModifier}] [{SpecialModifier}] [{Type}] [{Name}] [{Value}]";
+        return $"[{AccessModifier}] [{SpecialModifier}] [{Type}] [{Name}] [{CanRead}] [{CanWrite}] [{WriteAccessModifer}] [{Value}]";
     }
 }

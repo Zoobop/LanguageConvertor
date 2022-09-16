@@ -1,0 +1,6 @@
+﻿public static int Number = 8;
+public float weight = .4f;
+private bool result;
+protected decimal funds = 1200M;
+int num;
+const string Path = "C:\dev\LanguageConvertor\LanguageConvertor\Tests\Input\Input.cs";
