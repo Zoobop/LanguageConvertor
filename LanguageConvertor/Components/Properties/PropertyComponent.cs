@@ -115,7 +115,7 @@ internal struct PropertyComponent : IComponent<PropertyComponent>
         if (valueIndex != -1)
         {
             var index = valueIndex + 2; ;
-            value = span[index..^1].ToString();
+            value = span[index..^1].TrimEnd(';').ToString();
             //Console.WriteLine($"[{value}]");
         }
 

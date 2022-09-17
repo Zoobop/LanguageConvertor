@@ -12,108 +12,97 @@ namespace LanguageConvertor.Components
         public string? SpecialModifier { get; set; }
         public string? Type { get; set; }
         public string? Name { get; set; }
+        public IDictionary<string, string>? Parameters { get; }
 
         public bool IsStatic { get => SpecialModifier == "static"; }
         public bool IsPrivate { get => AccessModifier == "private" || AccessModifier == null; }
         public bool IsPublic { get => AccessModifier == "public"; }
         public bool IsProtected { get => AccessModifier == "protected"; }
+        public bool HasParameters { get => Parameters != null && Parameters.Count > 0; }
 
-        public MethodComponent(string? accessModifier, string? specialModifier, string? type, string? name, string? value, bool canRead, bool canWrite, string? writeAccessModifier)
+        public MethodComponent(string? accessModifier, string? specialModifier, string? type, string? name, IDictionary<string, string>? parameters)
         {
             AccessModifier = accessModifier;
             SpecialModifier = specialModifier;
             Type = type;
             Name = name;
+            Parameters = parameters;
         }
 
-        public static MethodComponent Parse(string propertyLine)
+        public static MethodComponent Parse(string methodData)
         {
-            var span = propertyLine.AsSpan();
+            var span = methodData.AsSpan();
 
             var accessor = string.Empty;
             var special = string.Empty;
-            var canRead = false;
-            var canWrite = false;
-            var writeAccessModifier = string.Empty;
-            var value = string.Empty;
+            var parameters = new Dictionary<string, string>();
 
-            /*            // Try get accessor
-                        var hasAccess = span.StartsWith("public") || span.StartsWith("private") || span.StartsWith("protected");
-                        if (hasAccess)
-                        {
-                            var length = span.IndexOf(' ');
-                            accessor = span[..length++].ToString();
-                            //Console.WriteLine($"[{accessor}]");
-                            span = span[length..];
-                        }
+            // Try get accessor
+            var hasAccess = span.StartsWith("public") || span.StartsWith("private") || span.StartsWith("protected");
+            if (hasAccess)
+            {
+                var length = span.IndexOf(' ');
+                accessor = span[..length++].ToString();
+                //Console.WriteLine($"[{accessor}]");
+                span = span[length..];
+            }
+            
+            // Try get special
+            var hasSpecial = span.StartsWith("static") || span.StartsWith("override") || span.StartsWith("virtual");
+            if (hasSpecial)
+            {
+                var length = span.IndexOf(' ');
+                special = span[..length++].ToString();
+                //Console.WriteLine($"[{special}]");
+                span = span[length..];
+            }
+            
+            // Get type
+            var typeIndex = span.IndexOf(' ');
+            var type = span[..typeIndex++].ToString();
+            //Console.WriteLine($"[{type}]");
+            span = span[typeIndex..];
 
-                        // Try get special
-                        var hasSpecial = span.StartsWith("static") || span.StartsWith("const");
-                        if (hasSpecial)
-                        {
-                            var length = span.IndexOf(' ');
-                            special = span[..length++].ToString();
-                            //Console.WriteLine($"[{special}]");
-                            span = span[length..];
-                        }
+            // Get name
+            var nameIndex = span.IndexOf('(');
+            var name = span[..nameIndex].ToString();
+            //Console.WriteLine($"[{name}]");
+            span = span[nameIndex..];
 
-                        // Get type
-                        var typeIndex = span.IndexOf(' ');
-                        var type = span[..typeIndex++].ToString();
-                        //Console.WriteLine($"[{type}]");
-                        span = span[typeIndex..];
+            // Try get params
+            var startParenthIndex = span.IndexOf('(');
+            var endParenthIndex = span.IndexOf(')');
+            if (endParenthIndex - startParenthIndex > 1)
+            {
+                span = span.TrimStart('(');
+                var hasArgs = true;
+                while (hasArgs)
+                {
+                    // Get arg type
+                    var argTypeIndex = span.IndexOf(' ');
+                    var argType = span[..argTypeIndex++].ToString();
+                    span = span[argTypeIndex..];
 
-                        // Get name
-                        var tryIndex = span.IndexOf(' ');
-                        var nameIndex = (tryIndex == -1) ? span.IndexOf(';') : tryIndex;
-                        var name = span[..nameIndex++].ToString();
-                        //Console.WriteLine($"[{name}]");
-                        span = span[nameIndex..];
+                    // Get arg name
+                    var tryArgIndex = span.IndexOf(',');
+                    var argNameIndex = (tryArgIndex == -1) ? span.IndexOf(')') : tryArgIndex;
+                    var argName = span[..argNameIndex++].ToString();
+                    span = span[argNameIndex..].Trim();
 
-                        // Try get getter
-                        var getterIndex = span.IndexOf('g');
-                        if (getterIndex != -1)
-                        {
-                            canRead = true;
-                            var nextIndex = getterIndex + 5;
-                            span = span[nextIndex..];
-                            //Console.WriteLine($"[{canRead}]");
-                        }
+                    //Console.WriteLine($"[{argType}:{argName}]");
+                    parameters.Add(argName, argType);
 
-                        // Try get write accessor
-                        var hasWriteAccess = span.StartsWith("public") || span.StartsWith("private") || span.StartsWith("protected");
-                        if (hasWriteAccess)
-                        {
-                            var length = span.IndexOf(' ');
-                            writeAccessModifier = span[..length++].ToString();
-                            //Console.WriteLine($"[{writeAccessModifier}]");
-                            span = span[length..];
-                        }
+                    // Break
+                    if (tryArgIndex == -1) hasArgs = false;
+                }
+            }
 
-                        // Try get setter
-                        var setterIndex = span.IndexOf('s');
-                        if (setterIndex != -1)
-                        {
-                            canWrite = true;
-                            //Console.WriteLine($"[{canWrite}]");
-                        }
-
-                        // Try get value
-                        var valueIndex = span.IndexOf('=');
-                        if (valueIndex != -1)
-                        {
-                            var index = valueIndex + 2; ;
-                            value = span[index..^1].ToString();
-                            //Console.WriteLine($"[{value}]");
-                        }
-
-                        return new MethodComponent(accessor, special, type, name, value, canRead, canWrite, writeAccessModifier);*/
-            return new MethodComponent();
+            return new MethodComponent(accessor, special, type, name, parameters);
         }
 
         public override string ToString()
         {
-            return null; //$"[{AccessModifier}] [{SpecialModifier}] [{Type}] [{Name}] [{CanRead}] [{CanWrite}] [{WriteAccessModifer}] [{Value}]";
+            return $"[{AccessModifier}] [{SpecialModifier}] [{Type}] [{Name}] [{(Parameters != null ? string.Join(", ", Parameters) : string.Empty)}]";
         }
     }
 }

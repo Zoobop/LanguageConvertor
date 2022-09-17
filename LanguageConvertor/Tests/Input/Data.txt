@@ -1,6 +1,16 @@
-﻿public static int Number = 8;
+﻿public static int number = 8;
 public float weight = .4f;
 private bool result;
 protected decimal funds = 1200M;
 int num;
 const string Path = "C:\dev\LanguageConvertor\LanguageConvertor\Tests\Input\Input.cs";
+int Age { get; private set; }
+public static float Pi { get; } = 3.14;
+bool[] Bits { set; }
+public Linker Linker { get; }
+IEnumerable<Person> People { get; protected set; } = new List<Person>(); 
+void function()
+int Add(int x, int y)
+public virtual float Deg2Rad(float deg)
+Person Create(string name, int age, float weight, decimal funds)
+public static void Main(string[] args)
