@@ -7,40 +7,25 @@ const string fieldData = "public static int Number = 0;";
 const string propertyData = "public static int Number { get; private set; } = 0;";
 const string methodData = "public virtual float Deg2Rad(float deg)";
 const string classData = "public abstract class Test1 : BaseClass";
+const string containerData = "namespace Container;";
 
 //var field = FieldComponent.Parse(fieldData);
 //var property = PropertyComponent.Parse(propertyData);
 //var method = MethodComponent.Parse(methodData);
-var @class = ClassComponent.Parse(classData);
-Console.WriteLine(@class);
+//var @class = ClassComponent.Parse(classData);
+//var container = ContainerComponent.Parse(containerData);
+//Console.WriteLine(container);
+
+
+
+const string Path = @"C:\dev\LanguageConvertor\LanguageConvertor\Tests\Input\Input.cs";
+var lines = File.ReadAllLines(Path);
+
+Parser parser = new Parser(lines);
+
 
 
 /*
-var fields = new List<FieldComponent>();
-var properties = new List<PropertyComponent>();
-var methods = new List<MethodComponent>();
-
-const string Path = @"C:\dev\LanguageConvertor\LanguageConvertor\Tests\Input\Data.txt";
-var lines = File.ReadAllLines(Path);
-foreach (var line in lines)
-{
-    if (!line.Contains('{') && line.Contains('('))
-    {
-        // Methods
-        methods.Add(MethodComponent.Parse(line));
-    }
-    else if (line.Contains('{'))
-    {
-        // Property
-        properties.Add(PropertyComponent.Parse(line));
-    }
-    else
-    {
-        // Fields
-        fields.Add(FieldComponent.Parse(line));
-    }
-}
-
 Console.WriteLine("Fields");
 foreach (var field in fields)
 {

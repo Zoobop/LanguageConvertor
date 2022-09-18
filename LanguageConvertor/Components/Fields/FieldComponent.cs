@@ -33,6 +33,7 @@ internal struct FieldComponent : IComponent<FieldComponent>
     public static FieldComponent Parse(string fieldLine)
     {
         var span = fieldLine.AsSpan();
+        span = span.Trim();
 
         var accessor = string.Empty;
         var special = string.Empty;

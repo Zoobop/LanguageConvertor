@@ -9,8 +9,13 @@ namespace ConversionOutput
     public class Test1
     {
         public string StringProperty { get; set; }
-	    public int IntProperty { get; }
+        public int IntProperty { get; }
 
         public int Example = 0;
+
+        public void Method()
+        {
+            
+        }
     }
 }

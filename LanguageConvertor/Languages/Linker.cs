@@ -36,11 +36,11 @@ public abstract class Linker
         _data = data;
 
         var parser = new Parser(data);
-        _imports = parser.GetImports();
-        _container = parser.GetContainer(GetLanguage());
-        _classModifers = parser.GetClassModifiers();
-        _memberModifiers = parser.GetMemberModifiers();
-        _methodModifiers = parser.GetMethodModifiers();
+        //_imports = parser.GetImports();
+        //_container = parser.GetContainer(GetLanguage());
+        //_classModifers = parser.GetClassModifiers();
+        //_memberModifiers = parser.GetMemberModifiers();
+        //_methodModifiers = parser.GetMethodModifiers();
     }
 
     protected abstract ConvertibleLanguage GetLanguage();

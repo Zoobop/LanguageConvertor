@@ -41,6 +41,7 @@ internal struct PropertyComponent : IComponent<PropertyComponent>
     public static PropertyComponent Parse(string propertyLine)
     {
         var span = propertyLine.AsSpan();
+        span = span.Trim();
 
         var accessor = string.Empty;
         var special = string.Empty;

@@ -31,6 +31,7 @@ internal struct ClassComponent : IComponent<ClassComponent>
     public static ClassComponent Parse(string classData)
     {
         var span = classData.AsSpan();
+        span = span.Trim();
 
         var accessor = string.Empty;
         var special = string.Empty;
