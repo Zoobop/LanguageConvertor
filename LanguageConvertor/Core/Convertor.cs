@@ -8,7 +8,7 @@ public class Convertor
     private readonly IEnumerable<string> _fileData;
     private readonly ConvertibleLanguage _language;
 
-    public Linker Linker { get; }
+    public OldLinker Linker { get; }
 
     public Convertor(string filePath, ConvertibleLanguage language)
     {
@@ -23,7 +23,7 @@ public class Convertor
         Linker = language switch
         {
             ConvertibleLanguage.Cpp => new CppSyntaxLinker(_fileData),
-            _ => new JavaSyntaxLinker(_fileData)
+            _ => new OldJavaSyntaxLinker(_fileData)
         };
     }
     
@@ -36,7 +36,7 @@ public class Convertor
         Linker = language switch
         {
             ConvertibleLanguage.Cpp => new CppSyntaxLinker(_fileData),
-            _ => new JavaSyntaxLinker(_fileData)
+            _ => new OldJavaSyntaxLinker(_fileData)
         };
     }
 

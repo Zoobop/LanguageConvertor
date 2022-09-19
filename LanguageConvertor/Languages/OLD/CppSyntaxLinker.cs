@@ -2,7 +2,7 @@
 
 namespace LanguageConvertor.Languages;
 
-public class CppSyntaxLinker : Linker
+public class CppSyntaxLinker : OldLinker
 {
     public CppSyntaxLinker(IEnumerable<string> data) : base(data)
     {

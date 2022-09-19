@@ -15,7 +15,7 @@ public struct ContainerSettings
     }
 }
 
-public abstract class Linker
+public abstract class OldLinker
 {
     protected IEnumerable<string> _data;
 
@@ -31,7 +31,7 @@ public abstract class Linker
     public Dictionary<string, MemberModifiers> Members => _memberModifiers;
     public Dictionary<string, MethodModifiers> Methods => _methodModifiers;
     
-    protected Linker(IEnumerable<string> data)
+    protected OldLinker(IEnumerable<string> data)
     {
         _data = data;
 

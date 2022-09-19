@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace LanguageConvertor.Components;
 
-internal struct MethodComponent : IComponent<MethodComponent>
+internal sealed class MethodComponent : IComponent
 {
     public string? AccessModifier { get; set; }
     public string? SpecialModifier { get; set; }
-    public string? Type { get; set; }
-    public string? Name { get; set; }
+    public string Type { get; set; }
+    public string Name { get; set; }
     public IDictionary<string, string>? Parameters { get; }
 
     public bool IsStatic { get => SpecialModifier == "static"; }
@@ -20,7 +20,7 @@ internal struct MethodComponent : IComponent<MethodComponent>
     public bool IsProtected { get => AccessModifier == "protected"; }
     public bool HasParameters { get => Parameters != null && Parameters.Count > 0; }
 
-    public MethodComponent(string? accessModifier, string? specialModifier, string? type, string? name, IDictionary<string, string>? parameters)
+    public MethodComponent(string? accessModifier, string? specialModifier, string type, string name, IDictionary<string, string>? parameters)
     {
         AccessModifier = accessModifier;
         SpecialModifier = specialModifier;
@@ -104,5 +104,10 @@ internal struct MethodComponent : IComponent<MethodComponent>
     public override string ToString()
     {
         return $"[{AccessModifier}] [{SpecialModifier}] [{Type}] [{Name}] [{(Parameters != null ? string.Join(", ", Parameters) : string.Empty)}]";
+    }
+
+    public bool IsScope()
+    {
+        return true;
     }
 }

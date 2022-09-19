@@ -6,26 +6,50 @@ using System.Threading.Tasks;
 
 namespace LanguageConvertor.Components;
 
-internal struct ClassComponent : IComponent<ClassComponent>
+internal sealed class ClassComponent : IComponent
 {
     public string? AccessModifier { get; set; }
     public string? SpecialModifier { get; set; }
-    public string? Name { get; set; }
+    public string Name { get; set; }
     public string? ParentClass { get; set; }
-    public IEnumerable<string>? Interfaces { get; }
+    public List<string> Interfaces { get; } = new List<string>();
+    public List<ClassComponent> Classes { get; } = new List<ClassComponent>();
+    public List<FieldComponent> Fields { get; } = new List<FieldComponent>();
+    public List<PropertyComponent> Properties { get; } = new List<PropertyComponent>();
+    public List<MethodComponent> Methods { get; } = new List<MethodComponent>();
 
     public bool IsStatic { get => SpecialModifier == "static"; }
     public bool IsPrivate { get => AccessModifier == "private" || AccessModifier == null; }
     public bool IsPublic { get => AccessModifier == "public"; }
     public bool IsProtected { get => AccessModifier == "protected"; }
 
-    public ClassComponent(string? accessModifier, string? specialModifier, string? name, string? parentClass, IEnumerable<string>? interfaces)
+    public ClassComponent(string? accessModifier, string? specialModifier, string name, string? parentClass, List<string> interfaces)
     {
         AccessModifier = accessModifier;
         SpecialModifier = specialModifier;
         Name = name;
         ParentClass = parentClass;
         Interfaces = interfaces;
+    }
+
+    public void AddClass(in ClassComponent @class)
+    {
+        Classes.Add(@class);
+    }
+
+    public void AddField(in FieldComponent field)
+    {
+        Fields.Add(field);
+    }
+
+    public void AddProperty(in PropertyComponent property)
+    {
+        Properties.Add(property);
+    }
+
+    public void AddMethod(in MethodComponent method)
+    {
+        Methods.Add(method);
     }
 
     public static ClassComponent Parse(string classData)
@@ -125,5 +149,10 @@ internal struct ClassComponent : IComponent<ClassComponent>
     public override string ToString()
     {
         return $"[{AccessModifier}] [{SpecialModifier}] [{Name}] [{ParentClass}] [{(Interfaces != null ? string.Join(", ", Interfaces) : string.Empty)}]";
+    }
+
+    public bool IsScope()
+    {
+        return true;
     }
 }

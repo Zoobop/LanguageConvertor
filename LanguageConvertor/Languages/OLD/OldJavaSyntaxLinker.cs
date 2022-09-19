@@ -2,9 +2,9 @@
 
 namespace LanguageConvertor.Languages;
 
-public class JavaSyntaxLinker : Linker
+public class OldJavaSyntaxLinker : OldLinker
 {
-    public JavaSyntaxLinker(IEnumerable<string> data) : base(data)
+    public OldJavaSyntaxLinker(IEnumerable<string> data) : base(data)
     {
     }
 

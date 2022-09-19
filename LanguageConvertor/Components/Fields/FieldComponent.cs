@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace LanguageConvertor.Components;
 
-internal struct FieldComponent : IComponent<FieldComponent>
+internal sealed class FieldComponent : IComponent
 {
     public string? AccessModifier { get; set; }
     public string? SpecialModifier { get; set; }
-    public string? Type { get; set; }
-    public string? Name { get; set; }
+    public string Type { get; set; }
+    public string Name { get; set; }
     public string? Value { get; set; }
 
     public bool IsConst { get => SpecialModifier == "const"; }
@@ -21,7 +21,7 @@ internal struct FieldComponent : IComponent<FieldComponent>
     public bool IsProtected { get => AccessModifier == "protected"; }
     public bool HasValue { get => string.IsNullOrEmpty(Value); }
 
-    public FieldComponent(string? accessModifier, string? specialModifier, string? type, string? name, string? value)
+    public FieldComponent(string? accessModifier, string? specialModifier, string type, string name, string? value)
     {
         AccessModifier = accessModifier;
         SpecialModifier = specialModifier;
@@ -87,5 +87,10 @@ internal struct FieldComponent : IComponent<FieldComponent>
     public override string ToString()
     {
         return $"[{AccessModifier}] [{SpecialModifier}] [{Type}] [{Name}] [{Value}]";
+    }
+
+    public bool IsScope()
+    {
+        return false;
     }
 }

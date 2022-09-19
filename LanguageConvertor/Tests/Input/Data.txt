@@ -1,16 +1,26 @@
-﻿public static int number = 8;
-public float weight = .4f;
-private bool result;
-protected decimal funds = 1200M;
-int num;
-const string Path = "C:\dev\LanguageConvertor\LanguageConvertor\Tests\Input\Input.cs";
-int Age { get; private set; }
-public static float Pi { get; } = 3.14;
-bool[] Bits { set; }
-public Linker Linker { get; }
-IEnumerable<Person> People { get; protected set; } = new List<Person>(); 
-void function()
-int Add(int x, int y)
-public virtual float Deg2Rad(float deg)
-Person Create(string name, int age, float weight, decimal funds)
-public static void Main(string[] args)
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ConversionOutput
+{
+    public class Test1 : Base, IInterface, IEnumerable<string>
+    {
+        public string? StringProperty { get; set; }
+        public int IntProperty { get; }
+
+        public int number = 0;
+        public float weight;
+
+        public void Method()
+        {   
+        }
+
+        private static int Add(int[] numbers)
+        {
+
+        }
+    }
+}

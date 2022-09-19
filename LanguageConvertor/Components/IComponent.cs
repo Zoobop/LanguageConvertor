@@ -6,7 +6,18 @@ using System.Threading.Tasks;
 
 namespace LanguageConvertor.Components;
 
-internal interface IComponent<T> where T : struct
+internal enum ComponentType
 {
-    public static T Parse(string fieldLine) => default;
+    Container,
+    Class,
+    Method,
+    Property,
+    Field
+}
+
+internal interface IComponent
+{
+    public string Name { get; set; }
+
+    public bool IsScope();
 }

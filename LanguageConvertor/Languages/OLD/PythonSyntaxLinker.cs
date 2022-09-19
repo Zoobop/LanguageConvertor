@@ -2,7 +2,7 @@
 
 namespace LanguageConvertor.Languages;
 
-public class PythonSyntaxLinker : Linker
+public class PythonSyntaxLinker : OldLinker
 {
     public PythonSyntaxLinker(IEnumerable<string> data) : base(data)
     {

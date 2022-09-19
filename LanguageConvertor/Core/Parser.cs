@@ -1,117 +1,100 @@
-﻿using LanguageConvertor.Languages;
-using LanguageConvertor.Components;
-using LanguageConvertor.Modifiers;
-using System.Reflection;
+﻿using LanguageConvertor.Components;
 
 namespace LanguageConvertor.Core;
 
 internal class Parser
 {
-    private enum ScopeType
-    {
-        Container,
-        Class,
-        Property,
-        Method
-    }
 
-    private struct Scope
+    internal readonly struct ComponentPack
     {
-        public string Name { get; set; } = string.Empty;
-        public Stack<ScopeType> Type { get; set; } = new Stack<ScopeType>();
+        public IComponent Component { get; }
+        public ComponentType Type { get; }
+
+        public ComponentPack(in IComponent component, ComponentType type)
+        {
+            Component = component;
+            Type = type;
+        }
     }
 
     private readonly IEnumerable<string> _data = new List<string>();
 
-    private List<string> _imports = new List<string>();
-    private List<ContainerComponent> _containers = new List<ContainerComponent>();
-    private List<ClassComponent> _classes = new List<ClassComponent>();
-    private List<MethodComponent> _methods = new List<MethodComponent>();
-    private List<FieldComponent> _fields = new List<FieldComponent>();
-    private List<PropertyComponent> _properties = new List<PropertyComponent>();
-
-    private readonly Scope _currentScope = new Scope();
+    public List<string> Imports { get; } = new List<string>();
+    public List<ContainerComponent> Containers { get; } = new List<ContainerComponent>();
+    public List<ClassComponent> Classes { get; } = new List<ClassComponent>();
+    public List<MethodComponent> Methods { get; } = new List<MethodComponent>();
+    public List<FieldComponent> Fields { get; }  = new List<FieldComponent>();
+    public List<PropertyComponent> Properties { get; } = new List<PropertyComponent>();
+    public Queue<ComponentPack> ComponentOrder { get; } = new Queue<ComponentPack>();
+    public int TotalCount { get => ComponentOrder.Count; }
 
     public Parser(in IEnumerable<string> data)
+    {
+        Parse(data);
+    }
+
+    private void Parse(in IEnumerable<string> data)
     {
         // Begin parse
         foreach (var line in data)
         {
             // Invalid line
-            if (IsEmpty(line)) continue;
+            if (IsEmpty(line) || IsScope(line)) continue;
 
             // IMPORTS
             if (IsImport(line))
             {
-                var importName = ParseImportStatement(line);
-                _imports.Add(importName);
-                Console.WriteLine(importName);
+                var import = ParseImportStatement(line);
+                Imports.Add(import);
+                //Console.WriteLine(import);
             }
             // CONTAINERS
             else if (IsContainer(line))
             {
                 var container = ParseContainer(line);
-                _containers.Add(container);
-                Console.WriteLine(container);
+                //Console.WriteLine(container);
+
+                Containers.Add(container);
+                ComponentOrder.Enqueue(new ComponentPack(container, ComponentType.Container));
             }
             // CLASSES
             else if (IsClass(line))
             {
                 var @class = ParseClass(line);
-                _classes.Add(@class);
-                Console.WriteLine(@class);
+                //Console.WriteLine(@class);
+
+                Classes.Add(@class);
+                ComponentOrder.Enqueue(new ComponentPack(@class, ComponentType.Class));
             }
             // METHODS
             else if (IsMethod(line))
             {
                 var method = ParseMethod(line);
-                _methods.Add(method);
-                Console.WriteLine(method);
+                //Console.WriteLine(method);
+
+                Methods.Add(method);
+                ComponentOrder.Enqueue(new ComponentPack(method, ComponentType.Method));
             }
             // FIELDS
             else if (IsField(line))
             {
                 var field = ParseField(line);
-                _fields.Add(field);
-                Console.WriteLine(field);
+                //Console.WriteLine(field);
+
+                Fields.Add(field);
+                ComponentOrder.Enqueue(new ComponentPack(field, ComponentType.Field));
+            }
+            // PROPERTIES
+            else
+            {
+                var property = ParseProperty(line);
+                //Console.WriteLine(property);
+
+                Properties.Add(property);
+                ComponentOrder.Enqueue(new ComponentPack(property, ComponentType.Property));
             }
         }
-        
     }
-    
-    #region Getters
-
-    public List<string> GetImports()
-    {
-        return _imports;
-    }
-
-    public List<ContainerComponent> GetContainers()
-    {
-        return _containers;
-    }
-    
-    public List<ClassComponent> GetClasses()
-    {
-        return _classes;
-    }
-    
-    public List<MethodComponent> GetMethods()
-    {
-        return _methods;
-    }
-
-    public List<PropertyComponent> GetProperties()
-    {
-        return _properties;
-    }
-
-    public List<FieldComponent> GetFields()
-    {
-        return _fields;
-    }
-
-    #endregion
 
     #region Rules
 
@@ -120,45 +103,31 @@ internal class Parser
         return string.IsNullOrEmpty(line) || string.IsNullOrWhiteSpace(line);
     }
 
-    public static bool IsImport(in string line)
+    private static bool IsScope(in string line)
+    {
+        var trimmed = line.Trim();
+        return trimmed.StartsWith('}') || trimmed.StartsWith('{');
+    }
+
+    private static bool IsImport(in string line)
     {
         return line.StartsWith("using");
     }
-    public static bool IsContainer(in string line)
+    private static bool IsContainer(in string line)
     {
         return line.StartsWith("namespace");
     }
-    public static bool IsClass(in string line)
+    private static bool IsClass(in string line)
     {
         return line.Contains("class");
     }
-    public static bool IsMethod(string line)
+    private static bool IsMethod(string line)
     {
         return line.Contains('(') && !line.Contains('{');
     }
     public static bool IsField(string line)
     {
-        return false;
-
-        var split = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-        if (split.Length <= 0) return false;
-        var hasAccess = CheckAccessModifier(split.First());
-        return !IsContainer(line) && !IsClass(line) && !IsMethod(line) && hasAccess;
-    }
-    public static bool IsProperty(string line)
-    {
-        if (!(line.Contains('{') && line.Contains('}'))) return false;
-
-        var split = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var hasAccess = CheckAccessModifier(split.First());
-
-        return !IsField(line) && hasAccess;
-    }
-    public static bool IsScope(string line, bool begin)
-    {
-        var text = line.TrimStart(' ');
-        return begin ? text.StartsWith('{') : text.StartsWith('}');
+        return !line.Contains('{');
     }
 
     #endregion
@@ -226,7 +195,7 @@ internal class Parser
         }
         
         // Try get special
-        var hasSpecial = span.StartsWith("static") || span.StartsWith("sealed") || span.StartsWith("virtual") || span.StartsWith("abstract");
+        var hasSpecial = span.StartsWith("static") || span.StartsWith("sealed") || span.StartsWith("abstract");
         if (hasSpecial)
         {
             var length = span.IndexOf(' ');
@@ -508,19 +477,4 @@ internal class Parser
     }
 
     #endregion
-
-    private static bool CheckAccessModifier(string text)
-    {
-        return text is "private" or "protected" or "public";
-    }
-
-    private static bool CheckSpecialModifier(string text)
-    {
-        return text is "abstract" or "override" or "virtual";
-    }
-
-    private static bool CheckClassSpecialModifier(string text)
-    {
-        return text is "abstract" or "sealed";
-    }
 }

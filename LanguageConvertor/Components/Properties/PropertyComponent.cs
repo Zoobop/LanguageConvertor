@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace LanguageConvertor.Components;
 
-internal struct PropertyComponent : IComponent<PropertyComponent>
+internal sealed class PropertyComponent : IComponent
 {
     public string? AccessModifier { get; set; }
     public string? SpecialModifier { get; set; }
-    public string? Type { get; set; }
-    public string? Name { get; set; }
+    public string Type { get; set; }
+    public string Name { get; set; }
     public string? Value { get; set; }
 
     public bool CanRead { get; }
@@ -25,7 +25,7 @@ internal struct PropertyComponent : IComponent<PropertyComponent>
     public bool IsProtected { get => AccessModifier == "protected"; }
     public bool HasValue { get => string.IsNullOrEmpty(Value); }
 
-    public PropertyComponent(string? accessModifier, string? specialModifier, string? type, string? name, string? value, bool canRead, bool canWrite, string? writeAccessModifier)
+    public PropertyComponent(string? accessModifier, string? specialModifier, string type, string name, string? value, bool canRead, bool canWrite, string? writeAccessModifier)
     {
         AccessModifier = accessModifier;
         SpecialModifier = specialModifier;
@@ -126,5 +126,10 @@ internal struct PropertyComponent : IComponent<PropertyComponent>
     public override string ToString()
     {
         return $"[{AccessModifier}] [{SpecialModifier}] [{Type}] [{Name}] [{CanRead}] [{CanWrite}] [{WriteAccessModifer}] [{Value}]";
+    }
+
+    public bool IsScope()
+    {
+        return false;
     }
 }
