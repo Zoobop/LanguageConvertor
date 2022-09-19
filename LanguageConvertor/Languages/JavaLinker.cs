@@ -144,7 +144,63 @@ internal class JavaLinker : Linker
 
     protected override string FormatProperty(in PropertyComponent propertyComponent)
     {
-        throw new NotImplementedException();
+        // Format property definition
+        var format = new StringBuilder();
+
+        // Try add accessor
+        var accessor = propertyComponent.AccessModifier;
+        if (!string.IsNullOrEmpty(accessor))
+        {
+            format.Append($"{accessor} ");
+        }
+
+        // Try add special
+        var special = propertyComponent.SpecialModifier;
+        if (!string.IsNullOrEmpty(special))
+        {
+            format.Append($"{special} ");
+        }
+
+        // Add type
+        var type = propertyComponent.Type;
+        format.Append($"{type} ");
+
+        // Add name
+        var name = propertyComponent.Name;
+        format.Append(name);
+
+        // Try add getter
+        var canRead = propertyComponent.CanRead;
+        format.Append("{ ");
+        if (canRead)
+        {
+            format.Append("get; ");
+        }
+
+        // Try get write accessor
+        var writeAccessor = propertyComponent.WriteAccessModifier;
+        if (!string.IsNullOrEmpty(writeAccessor))
+        {
+            format.Append($"{writeAccessor} ");
+        }
+
+        // Try get setter
+        var canWrite = propertyComponent.CanWrite;
+        if (canWrite)
+        {
+            format.Append("set;");
+        }
+
+        format.Append(" }");
+
+        // Try get value
+        var value = propertyComponent.Value;
+        if (!string.IsNullOrEmpty(value))
+        {
+            format.Append($" = {value};");
+        }
+
+        return format.ToString();
     }
 
     protected override string FormatField(in FieldComponent fieldComponent)
@@ -262,17 +318,23 @@ internal class JavaLinker : Linker
 
         // Write formatted data
         Append(formatMethod);
-        Append("{");
+        Append("{"); // Enter scope
         IncrementIndent();
-        Append();
+        
+        Append(); // Method body
+
         DecrementIndent();
-        Append("}");
+        Append("}"); // Exit scope
         Append();
     }
 
     private void BuildProperty(in PropertyComponent propertyComponent)
     {
+        var formatProperty = FormatProperty(propertyComponent);
 
+        // Write formatted data
+        Append(formatProperty);
+        Append();
     }
 
     private void BuildField(in FieldComponent fieldComponent)

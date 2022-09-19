@@ -1,38 +1,40 @@
 {
   "version": 3,
   "targets": {
-    "net6.0": {}
+    ".NETFramework,Version=v6.0": {},
+    ".NETFramework,Version=v6.0/win7-x86": {}
   },
   "libraries": {},
   "projectFileDependencyGroups": {
-    "net6.0": []
+    ".NETFramework,Version=v6.0": []
   },
   "packageFolders": {
-    "C:\\Users\\Brandon\\.nuget\\packages\\": {}
+    "C:\\Users\\c00431388\\.nuget\\packages\\": {},
+    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\dev\\LanguageConvertor\\LanguageConvertor\\LanguageConvertor.csproj",
+      "projectUniqueName": "C:\\Users\\c00431388\\Source\\Repos\\Zoobop\\LanguageConvertor\\LanguageConvertor\\LanguageConvertor.csproj",
       "projectName": "LanguageConvertor",
-      "projectPath": "C:\\dev\\LanguageConvertor\\LanguageConvertor\\LanguageConvertor.csproj",
-      "packagesPath": "C:\\Users\\Brandon\\.nuget\\packages\\",
-      "outputPath": "C:\\dev\\LanguageConvertor\\LanguageConvertor\\obj\\",
+      "projectPath": "C:\\Users\\c00431388\\Source\\Repos\\Zoobop\\LanguageConvertor\\LanguageConvertor\\LanguageConvertor.csproj",
+      "packagesPath": "C:\\Users\\c00431388\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\c00431388\\Source\\Repos\\Zoobop\\LanguageConvertor\\LanguageConvertor\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+      ],
       "configFilePaths": [
-        "C:\\Users\\Brandon\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\c00431388\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net6.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
-        "net6.0": {
-          "targetAlias": "net6.0",
+        "net60": {
           "projectReferences": {}
         }
       },
@@ -43,25 +45,13 @@
       }
     },
     "frameworks": {
-      "net6.0": {
-        "targetAlias": "net6.0",
-        "imports": [
-          "net461",
-          "net462",
-          "net47",
-          "net471",
-          "net472",
-          "net48",
-          "net481"
-        ],
-        "assetTargetFallback": true,
-        "warn": true,
-        "frameworkReferences": {
-          "Microsoft.NETCore.App": {
-            "privateAssets": "all"
-          }
-        },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.401\\RuntimeIdentifierGraph.json"
+      "net60": {
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.401\\RuntimeIdentifierGraph.json"
+      }
+    },
+    "runtimes": {
+      "win7-x86": {
+        "#import": []
       }
     }
   }
