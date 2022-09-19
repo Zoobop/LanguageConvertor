@@ -1,5 +1,6 @@
 ﻿using LanguageConvertor.Components;
 using LanguageConvertor.Core;
+using System;
 using System.Text;
 
 namespace LanguageConvertor.Languages;
@@ -32,8 +33,24 @@ internal class JavaLinker : Linker
 
     protected override string FormatContainer(in ContainerComponent containerComponent)
     {
-        var format = (containerComponent.IsFileScoped) ? $"{containerComponent.Name};" : containerComponent.Name;
-        return $"{GetContainerKeyword()} {format}";
+        // Format container
+        var format = new StringBuilder();
+
+        // Add container keyword
+        format.Append($"{GetContainerKeyword()} ");
+
+        // Add name
+        var name = containerComponent.Name;
+        format.Append(name);
+
+        // Try add file-scoped indicator
+        var isFileScoped = containerComponent.IsFileScoped;
+        if (isFileScoped)
+        {
+            format.Append(';');
+        }
+
+        return format.ToString();
     }
 
     protected override string FormatClass(in ClassComponent classComponent)
@@ -58,12 +75,9 @@ internal class JavaLinker : Linker
         // Add 'class' keyword
         format.Append("class ");
 
-        // Try add name
+        // Add name
         var name = classComponent.Name;
-        if (!string.IsNullOrEmpty(name))
-        {
-            format.Append(name);
-        }
+        format.Append(name);
 
         // Try add parent class
         var parentClass = classComponent.ParentClass;
@@ -84,7 +98,48 @@ internal class JavaLinker : Linker
 
     protected override string FormatMethod(in MethodComponent methodComponent)
     {
-        throw new NotImplementedException();
+        // Format method definition
+        var format = new StringBuilder();
+
+        // Try add accessor
+        var accessor = methodComponent.AccessModifier;
+        if (!string.IsNullOrEmpty(accessor))
+        {
+            format.Append($"{accessor} ");
+        }
+
+        // Try add special
+        var special = methodComponent.SpecialModifier;
+        if (!string.IsNullOrEmpty(special))
+        {
+            format.Append($"{special} ");
+        }
+
+        // Add return type
+        var returnType = methodComponent.Type;
+        format.Append($"{returnType} ");
+
+        // Add name
+        var name = methodComponent.Name;
+        format.Append(name);
+
+        // Try add parameters
+        var hasParameters = methodComponent.HasParameters;
+        format.Append('(');
+        if (hasParameters)
+        {
+            // Format each parameter
+            foreach (var (argName, argType) in methodComponent.Parameters)
+            {
+                format.Append($"{argType} {argName},");
+            }
+
+            // Remove last comma
+            format.Remove(format.Length - 1, 1);
+        }
+        format.Append(')');
+
+        return format.ToString();
     }
 
     protected override string FormatProperty(in PropertyComponent propertyComponent)
@@ -140,39 +195,32 @@ internal class JavaLinker : Linker
                     case ComponentType.Container:
                         // Get formatted data
                         var containerComponent = (ContainerComponent)allComponents[index];
-                        var formatContainer = FormatContainer(containerComponent);
 
-                        // Write formatted data
-                        Append(formatContainer);
-
-                        if (!containerComponent.IsFileScoped)
-                        {
-                            Append("{");
-                            IncrementIndent();
-                        }
-                        Append();
-                        
+                        BuildContainer(containerComponent);
                         break;
                     case ComponentType.Class:
                         // Get formatted data
                         var classComponent = (ClassComponent)allComponents[index];
-                        var formatClass = FormatClass(classComponent);
 
-                        // Write formatted data
-                        Append(formatClass);
-                        Append("{");
-                        Append();
-                        IncrementIndent();
+                        BuildClass(classComponent);
                         break;
                     case ComponentType.Method:
+                        // Get formatted data
                         var methodComponent = (MethodComponent)allComponents[index];
 
-                        //var formatMethod = FormatMethod(methodComponent);
-                        //Append(formatMethod);
+                        BuildMethod(methodComponent);
                         break;
                     case ComponentType.Property:
+                        // Get formatted data
+                        var propertyComponent = (PropertyComponent)allComponents[index];
+
+                        BuildProperty(propertyComponent);
                         break;
                     case ComponentType.Field:
+                        // Get formatted data
+                        var fieldComponent = (FieldComponent)allComponents[index];
+
+                        BuildField(fieldComponent);
                         break;
                 }
             }
@@ -180,5 +228,55 @@ internal class JavaLinker : Linker
 
         // Return formatted data
         return format;
+    }
+
+    private void BuildContainer(in ContainerComponent containerComponent)
+    {
+        var formatContainer = FormatContainer(containerComponent);
+
+        // Write formatted data
+        Append(formatContainer);
+
+        if (!containerComponent.IsFileScoped)
+        {
+            Append("{");
+            IncrementIndent();
+        }
+        Append();
+    }
+
+    private void BuildClass(in ClassComponent classComponent)
+    {
+        var formatClass = FormatClass(classComponent);
+
+        // Write formatted data
+        Append(formatClass);
+        Append("{");
+        Append();
+        IncrementIndent();
+    }
+
+    private void BuildMethod(in MethodComponent methodComponent)
+    {
+        var formatMethod = FormatMethod(methodComponent);
+
+        // Write formatted data
+        Append(formatMethod);
+        Append("{");
+        IncrementIndent();
+        Append();
+        DecrementIndent();
+        Append("}");
+        Append();
+    }
+
+    private void BuildProperty(in PropertyComponent propertyComponent)
+    {
+
+    }
+
+    private void BuildField(in FieldComponent fieldComponent)
+    {
+
     }
 }
