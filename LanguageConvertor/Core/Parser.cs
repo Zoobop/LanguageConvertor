@@ -90,7 +90,7 @@ internal class Parser
                 Feed(field, ComponentType.Field);
             }
             // PROPERTIES
-            else
+            else if (IsProperty(line))
             {
                 var property = ParseProperty(line);
 
@@ -133,13 +133,18 @@ internal class Parser
     {
         return line.Contains("class");
     }
-    private static bool IsMethod(string line)
+    private static bool IsMethod(in string line)
     {
         return line.Contains('(') && !line.Contains('{');
     }
-    public static bool IsField(string line)
+    public static bool IsField(in string line)
     {
         return !line.Contains('{');
+    }
+
+    public static bool IsProperty(in string line)
+    {
+        return line.Contains("{ get;") || line.Contains("set; }");
     }
 
     #endregion

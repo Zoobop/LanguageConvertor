@@ -37,6 +37,8 @@ internal abstract class Linker
     protected abstract void ConstructMethods(List<MethodComponent> methods);
     protected abstract void ConstructFields(List<FieldComponent> fields);
 
+    protected abstract void ConvertProperty(in ClassComponent classComponent);
+
     protected void Append(string text = "")
     {
         var indent = new string(' ', _indentLevel * 4);

@@ -14,6 +14,16 @@ namespace ConversionOutput
         public int number = 0;
         public float weight;
 
+        void Explode(bool sure)
+        {
+
+        }
+
+        protected static T Generic<T>(T obj)
+        {
+
+        }
+
         public void Method()
         {   
         }

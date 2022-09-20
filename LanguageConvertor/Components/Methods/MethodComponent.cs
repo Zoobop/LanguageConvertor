@@ -29,6 +29,19 @@ internal sealed class MethodComponent : IComponent
         Parameters = parameters;
     }
 
+    public MethodComponent(string? accessModifier, string? specialModifier, string type, string name, params KeyValuePair<string, string>[] argPairs)
+    {
+        AccessModifier = accessModifier;
+        SpecialModifier = specialModifier;
+        Type = type;
+        Name = name;
+        Parameters = new Dictionary<string,string>();
+        foreach (var pair in argPairs)
+        {
+            Parameters.Add(pair);
+        }
+    }
+
     public static MethodComponent Parse(string methodData)
     {
         var span = methodData.AsSpan();

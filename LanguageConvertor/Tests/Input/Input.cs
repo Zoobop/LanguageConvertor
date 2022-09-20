@@ -22,4 +22,26 @@ public class Test1
     {
 
     }
+
+    void Explode(bool sure)
+    {
+
+    }
+
+    protected static T Generic<T>(T obj)
+    {
+
+    }
+
+    public void Method()
+    {   
+    }
+    private static int Add(int[] numbers)
+    {
+    }
+}
+
+public class Test2 : ConversionOutput.Test1
+{
+    public int integer;
 }

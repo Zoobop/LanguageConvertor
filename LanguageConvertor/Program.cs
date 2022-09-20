@@ -16,7 +16,7 @@ using System.Security.Claims;
 //var @class = ClassComponent.Parse(classData);
 //var container = ContainerComponent.Parse(containerData);
 
-const string Path = @"C:\dev\LanguageConvertor\LanguageConvertor\Tests\Input\Data.txt";
+const string Path = @"C:\dev\LanguageConvertor\LanguageConvertor\Tests\Input\Input.cs";
 var lines = File.ReadAllLines(Path);
 
 Parser parser = new Parser(lines);

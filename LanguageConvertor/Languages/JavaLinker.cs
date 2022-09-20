@@ -1,8 +1,8 @@
 ﻿using LanguageConvertor.Components;
 using LanguageConvertor.Core;
 using System;
-using System.Security.Claims;
 using System.Text;
+using System.Collections.Generic;
 
 namespace LanguageConvertor.Languages;
 
@@ -252,6 +252,9 @@ internal class JavaLinker : Linker
             _parser.Components.Remove(classComponent);
             BuildClass(classComponent);
 
+            // Convert properties
+            ConvertProperty(classComponent);
+
             // Build fields
             ConstructFields(classComponent.Fields);
 
@@ -262,11 +265,32 @@ internal class JavaLinker : Linker
 
     protected override void ConstructMethods(List<MethodComponent> methods)
     {
-        foreach (var method in methods)
+        var publicMethods = methods.Where(x => x.AccessModifier == "public");
+        var privateMethods = methods.Where(x => x.AccessModifier == "private" || string.IsNullOrEmpty(x.AccessModifier));
+        var protectedMethods = methods.Where(x => x.AccessModifier == "protected");
+
+        // Build public methods
+        foreach (var pub in publicMethods)
         {
             // Remove accounted method
-            _parser.Components.Remove(method);
-            BuildMethod(method);
+            _parser.Components.Remove(pub);
+            BuildMethod(pub);
+        }
+
+        // Build private methods
+        foreach (var priv in privateMethods)
+        {
+            // Remove accounted method
+            _parser.Components.Remove(priv);
+            BuildMethod(priv);
+        }
+
+        // Build protected methods
+        foreach (var prot in protectedMethods)
+        {
+            // Remove accounted method
+            _parser.Components.Remove(prot);
+            BuildMethod(prot);
         }
     }
 
@@ -282,10 +306,36 @@ internal class JavaLinker : Linker
         Append();
     }
 
+    protected override void ConvertProperty(in ClassComponent classComponent)
+    {
+        foreach (var property in classComponent.Properties)
+        {
+            // Create the backing field
+            var span = property.Name.AsSpan();
+            var name = $"{span[0].ToString().ToLower()}{span[1..]}";
+            var fieldComponent = new FieldComponent("private", property.SpecialModifier, property.Type, $"{name}BackingField", property.Value);
+            classComponent.AddField(fieldComponent);
+
+            // Try create getter
+            if (property.CanRead)
+            {
+                var methodComponent = new MethodComponent(property.AccessModifier, property.SpecialModifier, property.Type, $"get{property.Name}");
+                classComponent.AddMethod(methodComponent);
+            }
+
+            // Try create setter
+            if (property.CanWrite)
+            {
+                var accessor = (!string.IsNullOrEmpty(property.WriteAccessModifier)) ? property.WriteAccessModifier : "public";
+
+                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new KeyValuePair<string, string>("value", property.Type));
+                classComponent.AddMethod(methodComponent);
+            }
+        }
+    }
+
     public override IEnumerable<string> BuildFile()
     {
-
-
         // FORMATTING
         var format = new List<string>(_parser.TotalCount);
 
@@ -352,6 +402,8 @@ internal class JavaLinker : Linker
             Append("{");
             IncrementIndent();
         }
+        
+        Append();
     }
 
     private void BuildClass(in ClassComponent classComponent)
