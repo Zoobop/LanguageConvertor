@@ -58,9 +58,14 @@ internal sealed class ContainerComponent : IComponent
         return new ContainerComponent(name, isFileScoped);
     }
 
-    public override string ToString()
+    public string Definition()
     {
         return $"[{Name}] [{IsFileScoped}]";
+    }
+
+    public override string ToString()
+    {
+        return Name;
     }
 
     public bool IsScope()

@@ -101,9 +101,14 @@ internal sealed class MethodComponent : IComponent
         return new MethodComponent(accessor, special, type, name, parameters);
     }
 
-    public override string ToString()
+    public string Definition()
     {
         return $"[{AccessModifier}] [{SpecialModifier}] [{Type}] [{Name}] [{(Parameters != null ? string.Join(", ", Parameters) : string.Empty)}]";
+    }
+
+    public override string ToString()
+    {
+        return Name;
     }
 
     public bool IsScope()

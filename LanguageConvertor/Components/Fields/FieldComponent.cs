@@ -84,9 +84,14 @@ internal sealed class FieldComponent : IComponent
         return new FieldComponent(accessor, special, type, name, value);
     }
 
-    public override string ToString()
+    public string Definition()
     {
         return $"[{AccessModifier}] [{SpecialModifier}] [{Type}] [{Name}] [{Value}]";
+    }
+
+    public override string ToString()
+    {
+        return Name;
     }
 
     public bool IsScope()

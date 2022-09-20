@@ -171,7 +171,7 @@ internal class JavaLinker : Linker
 
         // Try add getter
         var canRead = propertyComponent.CanRead;
-        format.Append("{ ");
+        format.Append(" { ");
         if (canRead)
         {
             format.Append("get; ");
@@ -188,10 +188,10 @@ internal class JavaLinker : Linker
         var canWrite = propertyComponent.CanWrite;
         if (canWrite)
         {
-            format.Append("set;");
+            format.Append("set; ");
         }
 
-        format.Append(" }");
+        format.Append("}");
 
         // Try get value
         var value = propertyComponent.Value;
@@ -205,7 +205,42 @@ internal class JavaLinker : Linker
 
     protected override string FormatField(in FieldComponent fieldComponent)
     {
-        throw new NotImplementedException();
+        // Format field definition
+        var format = new StringBuilder();
+
+        // Try add accessor
+        var accessor = fieldComponent.AccessModifier;
+        if (!string.IsNullOrEmpty(accessor))
+        {
+            format.Append($"{accessor} ");
+        }
+
+        // Try add special
+        var special = fieldComponent.SpecialModifier;
+        if (!string.IsNullOrEmpty(special))
+        {
+            format.Append($"{special} ");
+        }
+
+        // Add type
+        var type = fieldComponent.Type;
+        format.Append($"{type} ");
+
+        // Add name
+        var name = fieldComponent.Name;
+        format.Append(name);
+
+        // Try add value
+        var value = fieldComponent.Value;
+        if (!string.IsNullOrEmpty(value))
+        {
+            format.Append($" = {value}");
+        }
+
+        // Add end-statement indicator
+        format.Append(';');
+
+        return format.ToString();
     }
 
     protected override void ConstructMethods(List<string> file, List<string> methods)
@@ -339,6 +374,10 @@ internal class JavaLinker : Linker
 
     private void BuildField(in FieldComponent fieldComponent)
     {
+        var formatField = FormatField(fieldComponent);
 
+        // Write formatted data
+        Append(formatField);
+        Append();
     }
 }

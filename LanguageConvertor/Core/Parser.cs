@@ -9,15 +9,15 @@ internal class Parser
     {
         public IComponent Component { get; }
         public ComponentType Type { get; }
+        public IComponent? ParentScope { get; }
 
-        public ComponentPack(in IComponent component, ComponentType type)
+        public ComponentPack(in IComponent component, ComponentType type, in IComponent? parentScope)
         {
             Component = component;
             Type = type;
+            ParentScope = parentScope;
         }
     }
-
-    private readonly IEnumerable<string> _data = new List<string>();
 
     public List<string> Imports { get; } = new List<string>();
     public List<ContainerComponent> Containers { get; } = new List<ContainerComponent>();
@@ -27,6 +27,8 @@ internal class Parser
     public List<PropertyComponent> Properties { get; } = new List<PropertyComponent>();
     public Queue<ComponentPack> ComponentOrder { get; } = new Queue<ComponentPack>();
     public int TotalCount { get => ComponentOrder.Count; }
+
+    private readonly Stack<IComponent> _scopeStack = new Stack<IComponent>();
 
     public Parser(in IEnumerable<string> data)
     {
@@ -39,7 +41,7 @@ internal class Parser
         foreach (var line in data)
         {
             // Invalid line
-            if (IsEmpty(line) || IsScope(line)) continue;
+            if (IsEmpty(line) || IsBeginScope(line)) continue;
 
             // IMPORTS
             if (IsImport(line))
@@ -55,7 +57,10 @@ internal class Parser
                 //Console.WriteLine(container);
 
                 Containers.Add(container);
-                ComponentOrder.Enqueue(new ComponentPack(container, ComponentType.Container));
+
+                var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
+                _scopeStack.Push(container);
+                ComponentOrder.Enqueue(new ComponentPack(container, ComponentType.Container, currentScope));
             }
             // CLASSES
             else if (IsClass(line))
@@ -64,7 +69,10 @@ internal class Parser
                 //Console.WriteLine(@class);
 
                 Classes.Add(@class);
-                ComponentOrder.Enqueue(new ComponentPack(@class, ComponentType.Class));
+
+                var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
+                _scopeStack.Push(@class);
+                ComponentOrder.Enqueue(new ComponentPack(@class, ComponentType.Class, currentScope));
             }
             // METHODS
             else if (IsMethod(line))
@@ -73,7 +81,15 @@ internal class Parser
                 //Console.WriteLine(method);
 
                 Methods.Add(method);
-                ComponentOrder.Enqueue(new ComponentPack(method, ComponentType.Method));
+
+                 var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
+                _scopeStack.Push(method);
+                ComponentOrder.Enqueue(new ComponentPack(method, ComponentType.Method, currentScope));
+            }
+            // END SCOPE
+            else if (IsEndScope(line))
+            {
+                _scopeStack.Pop();
             }
             // FIELDS
             else if (IsField(line))
@@ -82,7 +98,9 @@ internal class Parser
                 //Console.WriteLine(field);
 
                 Fields.Add(field);
-                ComponentOrder.Enqueue(new ComponentPack(field, ComponentType.Field));
+
+                var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
+                ComponentOrder.Enqueue(new ComponentPack(field, ComponentType.Field, currentScope));
             }
             // PROPERTIES
             else
@@ -91,8 +109,12 @@ internal class Parser
                 //Console.WriteLine(property);
 
                 Properties.Add(property);
-                ComponentOrder.Enqueue(new ComponentPack(property, ComponentType.Property));
+                
+                var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
+                ComponentOrder.Enqueue(new ComponentPack(property, ComponentType.Property, currentScope));
             }
+
+            Console.WriteLine($"[{string.Join(':', _scopeStack)}]");
         }
     }
 
@@ -103,10 +125,16 @@ internal class Parser
         return string.IsNullOrEmpty(line) || string.IsNullOrWhiteSpace(line);
     }
 
-    private static bool IsScope(in string line)
+    private static bool IsBeginScope(in string line)
     {
-        var trimmed = line.Trim();
-        return trimmed.StartsWith('}') || trimmed.StartsWith('{');
+        var trimmed = line.Trim(' ', '\t');
+        return trimmed.StartsWith('{');// || trimmed.StartsWith('{');
+    }
+
+    private static bool IsEndScope(in string line)
+    {
+        var trimmed = line.Trim(' ', '\t');
+        return trimmed.StartsWith('}');// || trimmed.StartsWith('{');
     }
 
     private static bool IsImport(in string line)

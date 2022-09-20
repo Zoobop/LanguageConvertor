@@ -16,7 +16,7 @@ internal sealed class PropertyComponent : IComponent
 
     public bool CanRead { get; }
     public bool CanWrite { get; }
-    public string? WriteAccessModifer { get; set; }
+    public string? WriteAccessModifier { get; set; }
 
     public bool IsConst { get => SpecialModifier == "const"; }
     public bool IsStatic { get => SpecialModifier == "static"; }
@@ -35,7 +35,7 @@ internal sealed class PropertyComponent : IComponent
 
         CanRead = canRead;
         CanWrite = canWrite;
-        WriteAccessModifer = writeAccessModifier;
+        WriteAccessModifier = writeAccessModifier;
     }
 
     public static PropertyComponent Parse(string propertyLine)
@@ -123,9 +123,14 @@ internal sealed class PropertyComponent : IComponent
         return new PropertyComponent(accessor, special, type, name, value, canRead, canWrite, writeAccessModifier);
     }
 
+    public string Definition()
+    {
+        return $"[{AccessModifier}] [{SpecialModifier}] [{Type}] [{Name}] [{CanRead}] [{CanWrite}] [{WriteAccessModifier}] [{Value}]";
+    }
+
     public override string ToString()
     {
-        return $"[{AccessModifier}] [{SpecialModifier}] [{Type}] [{Name}] [{CanRead}] [{CanWrite}] [{WriteAccessModifer}] [{Value}]";
+        return Name;
     }
 
     public bool IsScope()

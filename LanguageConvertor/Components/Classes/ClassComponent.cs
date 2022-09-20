@@ -146,9 +146,14 @@ internal sealed class ClassComponent : IComponent
         return new ClassComponent(accessor, special, name, parent, interfaces);
     }
 
-    public override string ToString()
+    public string Definition()
     {
         return $"[{AccessModifier}] [{SpecialModifier}] [{Name}] [{ParentClass}] [{(Interfaces != null ? string.Join(", ", Interfaces) : string.Empty)}]";
+    }
+
+    public override string ToString()
+    {
+        return Name;
     }
 
     public bool IsScope()
