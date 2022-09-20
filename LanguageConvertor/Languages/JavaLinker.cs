@@ -1,6 +1,7 @@
 ﻿using LanguageConvertor.Components;
 using LanguageConvertor.Core;
 using System;
+using System.Security.Claims;
 using System.Text;
 
 namespace LanguageConvertor.Languages;
@@ -243,28 +244,50 @@ internal class JavaLinker : Linker
         return format.ToString();
     }
 
-    protected override void ConstructMethods(List<string> file, List<string> methods)
+    protected override void ConstructClass(List<ClassComponent> classes)
     {
-        throw new NotImplementedException();
+        foreach (var classComponent in classes)
+        {
+            // Remove accounted class
+            _parser.Components.Remove(classComponent);
+            BuildClass(classComponent);
+
+            // Build fields
+            ConstructFields(classComponent.Fields);
+
+            // Build methods
+            ConstructMethods(classComponent.Methods);
+        }
     }
 
-    protected override void ConstructMembers(List<string> file, List<string> members)
+    protected override void ConstructMethods(List<MethodComponent> methods)
     {
-        throw new NotImplementedException();
+        foreach (var method in methods)
+        {
+            // Remove accounted method
+            _parser.Components.Remove(method);
+            BuildMethod(method);
+        }
     }
 
-    public override IEnumerable<string> GetFormattedFileData()
+    protected override void ConstructFields(List<FieldComponent> fields)
     {
-        // AGGREGATE
-        var allComponents = new List<IComponent>(_parser.TotalCount);
-        allComponents.AddRange(_parser.Containers.ConvertAll<IComponent>(x => x));
-        allComponents.AddRange(_parser.Classes.ConvertAll<IComponent>(x => x));
-        allComponents.AddRange(_parser.Methods.ConvertAll<IComponent>(x => x));
-        allComponents.AddRange(_parser.Properties.ConvertAll<IComponent>(x => x));
-        allComponents.AddRange(_parser.Fields.ConvertAll<IComponent>(x => x));
+        foreach (var field in fields)
+        {
+            // Remove accounted field
+            _parser.Components.Remove(field);
+            BuildField(field);
+        }
+
+        Append();
+    }
+
+    public override IEnumerable<string> BuildFile()
+    {
+
 
         // FORMATTING
-        var format = new List<string>(allComponents.Count);
+        var format = new List<string>(_parser.TotalCount);
 
         // Imports
         foreach (var import in _parser.Imports)
@@ -273,47 +296,43 @@ internal class JavaLinker : Linker
         }
         Append();
 
-        var componentOrder = _parser.ComponentOrder;
-        while (componentOrder.TryDequeue(out var component))
+        // Build containers
+        var containers = _parser.Containers;
+        foreach (var container in containers)
         {
-            // Find the matching component
-            var index = allComponents.FindIndex(x => ReferenceEquals(x, component.Component));
-            if (index != -1)
+            // Remove accounted container
+            _parser.Components.Remove(container);
+            BuildContainer(container);
+
+            // Build classes
+            ConstructClass(container.Classes);
+
+            // Close scopes
+            while (_indentLevel != 0)
             {
-                // Format componnent
-                switch (component.Type)
-                {
-                    case ComponentType.Container:
-                        // Get formatted data
-                        var containerComponent = (ContainerComponent)allComponents[index];
+                DecrementIndent();
+                Append("}");
+            }
+        }
 
-                        BuildContainer(containerComponent);
-                        break;
-                    case ComponentType.Class:
-                        // Get formatted data
-                        var classComponent = (ClassComponent)allComponents[index];
+        // Build classes
+        if (_parser.Components.Count > 0)
+        {
+            Append();
 
-                        BuildClass(classComponent);
-                        break;
-                    case ComponentType.Method:
-                        // Get formatted data
-                        var methodComponent = (MethodComponent)allComponents[index];
+            var classes = _parser.Components
+                .Where(x => x.GetType() == typeof(ClassComponent))
+                .Select(x => (ClassComponent)x)
+                .ToList();
 
-                        BuildMethod(methodComponent);
-                        break;
-                    case ComponentType.Property:
-                        // Get formatted data
-                        var propertyComponent = (PropertyComponent)allComponents[index];
+            // Build classes
+            ConstructClass(classes);
 
-                        BuildProperty(propertyComponent);
-                        break;
-                    case ComponentType.Field:
-                        // Get formatted data
-                        var fieldComponent = (FieldComponent)allComponents[index];
-
-                        BuildField(fieldComponent);
-                        break;
-                }
+            // Close scopes
+            while (_indentLevel != 0)
+            {
+                DecrementIndent();
+                Append("}");
             }
         }
 
@@ -333,7 +352,6 @@ internal class JavaLinker : Linker
             Append("{");
             IncrementIndent();
         }
-        Append();
     }
 
     private void BuildClass(in ClassComponent classComponent)
@@ -343,7 +361,6 @@ internal class JavaLinker : Linker
         // Write formatted data
         Append(formatClass);
         Append("{");
-        Append();
         IncrementIndent();
     }
 
@@ -378,6 +395,5 @@ internal class JavaLinker : Linker
 
         // Write formatted data
         Append(formatField);
-        Append();
     }
 }

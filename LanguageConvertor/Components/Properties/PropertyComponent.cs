@@ -137,4 +137,8 @@ internal sealed class PropertyComponent : IComponent
     {
         return false;
     }
+
+    public void AddComponent(in IComponent component)
+    {
+    }
 }

@@ -5,17 +5,20 @@ namespace LanguageConvertor.Core;
 internal class Parser
 {
 
-    internal readonly struct ComponentPack
+    internal sealed class ComponentPack
     {
         public IComponent Component { get; }
         public ComponentType Type { get; }
-        public IComponent? ParentScope { get; }
 
-        public ComponentPack(in IComponent component, ComponentType type, in IComponent? parentScope)
+        public ComponentPack(in IComponent component, ComponentType type)
         {
             Component = component;
             Type = type;
-            ParentScope = parentScope;
+        }
+
+        public override string ToString()
+        {
+            return Component.Name;
         }
     }
 
@@ -25,10 +28,10 @@ internal class Parser
     public List<MethodComponent> Methods { get; } = new List<MethodComponent>();
     public List<FieldComponent> Fields { get; }  = new List<FieldComponent>();
     public List<PropertyComponent> Properties { get; } = new List<PropertyComponent>();
-    public Queue<ComponentPack> ComponentOrder { get; } = new Queue<ComponentPack>();
-    public int TotalCount { get => ComponentOrder.Count; }
+    public LinkedList<IComponent> Components { get; } = new LinkedList<IComponent>();
+    public int TotalCount { get => Components.Count; }
 
-    private readonly Stack<IComponent> _scopeStack = new Stack<IComponent>();
+    private Stack<ComponentPack> _scopeStack { get; } = new Stack<ComponentPack>();
 
     public Parser(in IEnumerable<string> data)
     {
@@ -48,43 +51,30 @@ internal class Parser
             {
                 var import = ParseImportStatement(line);
                 Imports.Add(import);
-                //Console.WriteLine(import);
             }
             // CONTAINERS
             else if (IsContainer(line))
             {
                 var container = ParseContainer(line);
-                //Console.WriteLine(container);
 
                 Containers.Add(container);
-
-                var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
-                _scopeStack.Push(container);
-                ComponentOrder.Enqueue(new ComponentPack(container, ComponentType.Container, currentScope));
+                Feed(container, ComponentType.Container, true);
             }
             // CLASSES
             else if (IsClass(line))
             {
                 var @class = ParseClass(line);
-                //Console.WriteLine(@class);
 
                 Classes.Add(@class);
-
-                var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
-                _scopeStack.Push(@class);
-                ComponentOrder.Enqueue(new ComponentPack(@class, ComponentType.Class, currentScope));
+                Feed(@class, ComponentType.Class, true);
             }
             // METHODS
             else if (IsMethod(line))
             {
                 var method = ParseMethod(line);
-                //Console.WriteLine(method);
 
                 Methods.Add(method);
-
-                 var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
-                _scopeStack.Push(method);
-                ComponentOrder.Enqueue(new ComponentPack(method, ComponentType.Method, currentScope));
+                Feed(method, ComponentType.Method, true);
             }
             // END SCOPE
             else if (IsEndScope(line))
@@ -95,23 +85,17 @@ internal class Parser
             else if (IsField(line))
             {
                 var field = ParseField(line);
-                //Console.WriteLine(field);
 
                 Fields.Add(field);
-
-                var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
-                ComponentOrder.Enqueue(new ComponentPack(field, ComponentType.Field, currentScope));
+                Feed(field, ComponentType.Field);
             }
             // PROPERTIES
             else
             {
                 var property = ParseProperty(line);
-                //Console.WriteLine(property);
 
                 Properties.Add(property);
-                
-                var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
-                ComponentOrder.Enqueue(new ComponentPack(property, ComponentType.Property, currentScope));
+                Feed(property, ComponentType.Property);
             }
 
             Console.WriteLine($"[{string.Join(':', _scopeStack)}]");
@@ -502,6 +486,21 @@ internal class Parser
         }
 
         return new MethodComponent(accessor, special, type, name, parameters);
+    }
+
+    #endregion
+
+    #region Helpers
+
+    private void Feed(in IComponent component, ComponentType type, bool isScope = false)
+    {
+        var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
+        currentScope?.Component.AddComponent(component);
+        Components.AddLast(component);
+        if (isScope)
+        {
+            _scopeStack.Push(new ComponentPack(component, type));
+        }
     }
 
     #endregion

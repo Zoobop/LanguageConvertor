@@ -20,7 +20,11 @@ namespace ConversionOutput
 
         private static int Add(int[] numbers)
         {
-
         }
     }
+}
+
+public class Test2 : ConversionOutput.Test1
+{
+    public int integer;
 }

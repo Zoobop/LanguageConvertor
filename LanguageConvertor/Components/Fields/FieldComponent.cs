@@ -98,4 +98,8 @@ internal sealed class FieldComponent : IComponent
     {
         return false;
     }
+
+    public void AddComponent(in IComponent component)
+    {
+    }
 }

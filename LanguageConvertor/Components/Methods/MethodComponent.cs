@@ -115,4 +115,8 @@ internal sealed class MethodComponent : IComponent
     {
         return true;
     }
+
+    public void AddComponent(in IComponent component)
+    {
+    }
 }

@@ -20,4 +20,5 @@ internal interface IComponent
     public string Name { get; set; }
 
     public bool IsScope();
+    public void AddComponent(in IComponent component);
 }

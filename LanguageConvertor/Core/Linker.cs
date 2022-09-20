@@ -33,8 +33,9 @@ internal abstract class Linker
     protected abstract string FormatProperty(in PropertyComponent propertyComponent);
     protected abstract string FormatField(in FieldComponent fieldComponent);
 
-    protected abstract void ConstructMethods(List<string> file, List<string> methods);
-    protected abstract void ConstructMembers(List<string> file, List<string> members);
+    protected abstract void ConstructClass(List<ClassComponent> classes);
+    protected abstract void ConstructMethods(List<MethodComponent> methods);
+    protected abstract void ConstructFields(List<FieldComponent> fields);
 
     protected void Append(string text = "")
     {
@@ -44,15 +45,8 @@ internal abstract class Linker
         Console.WriteLine(data);
     }
 
-    protected void IncrementIndent()
-    {
-        ++_indentLevel;
-    }
-    
-    protected void DecrementIndent()
-    {
-        --_indentLevel;
-    }
+    protected void IncrementIndent() => ++_indentLevel;
+    protected void DecrementIndent() => --_indentLevel;
 
-    public abstract IEnumerable<string> GetFormattedFileData();
+    public abstract IEnumerable<string> BuildFile();
 }

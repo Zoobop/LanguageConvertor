@@ -160,4 +160,29 @@ internal sealed class ClassComponent : IComponent
     {
         return true;
     }
+
+    public void AddComponent(in IComponent component)
+    {
+        var type = component.GetType();
+        if (type == typeof(ClassComponent))
+        {
+            var @class = (ClassComponent)component;
+            Classes.Add(@class);
+        }
+        else if (type == typeof(MethodComponent))
+        {
+            var method = (MethodComponent)component;
+            Methods.Add(method);
+        }
+        else if (type == typeof(PropertyComponent))
+        {
+            var property = (PropertyComponent)component;
+            Properties.Add(property);
+        }
+        else
+        {
+            var field = (FieldComponent)component;
+            Fields.Add(field);
+        }
+    }
 }
