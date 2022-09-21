@@ -1,12 +1,11 @@
-using Abstraction;
+using Output;
 
 namespace Output
 {
     public class FromCSharp : Base, IInterface
     {
-        public string StringProperty { get; set; }
+        public string StringProperty { get; protected set; }
         public int IntProperty { get; }
-        public IAnimal Animal { get; private set; }
 
         public int number = 0;
         public float weight;
@@ -18,12 +17,7 @@ namespace Output
 
         private static int Add(int[] numbers, int count)
         {
-            var sum = 0;
-            for (var i = 0; i < count; i++)
-            {
-                sum += numbers[i];
-            }
-            return sum;
+            return 0;
         }
 
         void Explode(bool sure)
@@ -31,12 +25,17 @@ namespace Output
 
         }
 
-        protected static void Func(string obj)
+        protected override void Func1(int obj)
         {
 
         }
 
-        public static void FindAnimal(IAnimal animal)
+        protected override void Func2(string obj)
+        {
+
+        }
+
+        public void Func3(object obj)
         {
 
         }

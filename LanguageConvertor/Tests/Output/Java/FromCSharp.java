@@ -1,6 +1,6 @@
-package Output;
+package Output.Java;
 
-import Abstraction.*;
+import Output.Java.Example.*;
 
 public class FromCSharp extends Base implements IInterface
 {
@@ -8,14 +8,13 @@ public class FromCSharp extends Base implements IInterface
     public float weight;
     private String stringPropertyBackingField;
     private int intPropertyBackingField;
-    private IAnimal animalBackingField;
     
     public void method()
     {
         
     }
     
-    public static void findAnimal(IAnimal animal)
+    public void func3(Object obj)
     {
         
     }
@@ -25,19 +24,9 @@ public class FromCSharp extends Base implements IInterface
         return stringPropertyBackingField;
     }
     
-    public void setStringProperty(String value)
-    {
-        stringPropertyBackingField = value;
-    }
-    
     public int getIntProperty()
     {
         return intPropertyBackingField;
-    }
-    
-    public IAnimal getAnimal()
-    {
-        return animalBackingField;
     }
     
     private static int add(int[] numbers,int count)
@@ -50,19 +39,26 @@ public class FromCSharp extends Base implements IInterface
         return sum;
     }
     
-    void explode(bool sure)
+    void explode(boolean sure)
     {
         
     }
     
-    private void setAnimal(IAnimal value)
-    {
-        animalBackingField = value;
-    }
-    
-    protected static void func(String obj)
+    @Override
+    protected void func1(int obj)
     {
         
+    }
+    
+    @Override
+    protected void func2(String obj)
+    {
+        
+    }
+    
+    protected void setStringProperty(String value)
+    {
+        stringPropertyBackingField = value;
     }
     
 }

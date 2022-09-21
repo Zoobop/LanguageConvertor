@@ -24,7 +24,7 @@ C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\LanguageConvertor.As
 C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\LanguageConvertor.AssemblyInfo.cs
 C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\LanguageConvertor.csproj.CoreCompileInputs.cache
 C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\LanguageConvertor.dll
-C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\refint\LanguageConvertor.dll
 C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\LanguageConvertor.pdb
 C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\LanguageConvertor.genruntimeconfig.cache
 C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\ref\LanguageConvertor.dll
+C:\dev\LanguageConvertor\LanguageConvertor\bin\Debug\net6.0\ref\LanguageConvertor.dll

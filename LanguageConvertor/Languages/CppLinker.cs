@@ -22,6 +22,7 @@ internal sealed class CppLinker : Linker
         {"ushort", "uint16_t"},
         {"uint", "uint32_t"},
         {"ulong", "uint64_t"},
+        {"object", "uint32_t"},
         {"string", "std::string"},
     };
 
@@ -48,7 +49,7 @@ internal sealed class CppLinker : Linker
 
     protected override string FormatImport(string importName)
     {
-        return $"{GetImportKeyword()} \"{importName}.h\"";
+        return $"{GetImportKeyword()} \"Example/{importName}.hpp\"";
     }
 
     protected override string FormatContainer(in ContainerComponent containerComponent)
@@ -61,22 +62,6 @@ internal sealed class CppLinker : Linker
     {
         // Format class definition
         var format = new StringBuilder();
-
-/*        // Try add accessor
-        var accessor = classComponent.AccessModifier;
-        if (!string.IsNullOrEmpty(accessor))
-        {
-            format.Append($"{accessor} ");
-        }
-
-        // Try add special
-        var special = classComponent.SpecialModifier;
-        if (!string.IsNullOrEmpty(special))
-        {
-            var javaSpecial = special;
-
-            format.Append($"{javaSpecial} ");
-        }*/
 
         // Add 'class' keyword
         format.Append("class ");
@@ -108,15 +93,15 @@ internal sealed class CppLinker : Linker
         var format = new StringBuilder();
 
         // Try add accessor
-        var accessor = methodComponent.AccessModifier;
-        if (!string.IsNullOrEmpty(accessor))
-        {
-            format.Append($"{accessor} ");
-        }
+        //var accessor = methodComponent.AccessModifier;
+        //if (!string.IsNullOrEmpty(accessor))
+        //{
+        //    format.Append($"{accessor} ");
+        //}
 
         // Try add special
         var special = methodComponent.SpecialModifier;
-        if (!string.IsNullOrEmpty(special))
+        if (!string.IsNullOrEmpty(special) && !methodComponent.IsOverride)
         {
             format.Append($"{special} ");
         }
@@ -137,13 +122,19 @@ internal sealed class CppLinker : Linker
             // Format each parameter
             foreach (var (argName, argType) in methodComponent.Parameters)
             {
-                format.Append($"{TryConvertTypeToCpp(argType)} {argName},");
+                format.Append($"{TryConvertTypeToCpp(argType)} {argName}, ");
             }
 
-            // Remove last comma
-            format.Remove(format.Length - 1, 1);
+            // Trim end
+            format.Remove(format.Length - 2, 2);
         }
         format.Append(')');
+
+        // Try add override
+        if (!string.IsNullOrEmpty(special) && methodComponent.IsOverride)
+        {
+            format.Append($" {special}");
+        }
 
         return format.ToString();
     }
@@ -214,13 +205,6 @@ internal sealed class CppLinker : Linker
         // Format field definition
         var format = new StringBuilder();
 
-        // Try add accessor
-        var accessor = fieldComponent.AccessModifier;
-        if (!string.IsNullOrEmpty(accessor))
-        {
-            format.Append($"{accessor} ");
-        }
-
         // Try add special
         var special = fieldComponent.SpecialModifier;
         if (!string.IsNullOrEmpty(special))
@@ -264,11 +248,11 @@ internal sealed class CppLinker : Linker
             // Convert properties
             ConvertProperty(classComponent);
 
-            // Build fields
-            ConstructFields(classComponent.Fields);
-
             // Build methods
             ConstructMethods(classComponent.Methods);
+
+            // Build fields
+            ConstructFields(classComponent.Fields);
 
             DecrementIndent();
             Append("}");
@@ -283,6 +267,8 @@ internal sealed class CppLinker : Linker
         var protectedMethods = methods.Where(x => x.AccessModifier == "protected");
 
         // Build public methods
+        Append("public:");
+        IncrementIndent();
         foreach (var pub in publicMethods)
         {
             // Remove accounted method
@@ -290,7 +276,21 @@ internal sealed class CppLinker : Linker
             BuildMethod(pub);
         }
 
+        // Build protected methods
+        DecrementIndent();
+        Append("protected:");
+        IncrementIndent();
+        foreach (var prot in protectedMethods)
+        {
+            // Remove accounted method
+            _parser.Components.Remove(prot);
+            BuildMethod(prot);
+        }
+    
         // Build private methods
+        DecrementIndent();
+        Append("private:");
+        IncrementIndent();
         foreach (var priv in privateMethods)
         {
             // Remove accounted method
@@ -298,25 +298,56 @@ internal sealed class CppLinker : Linker
             BuildMethod(priv);
         }
 
-        // Build protected methods
-        foreach (var prot in protectedMethods)
-        {
-            // Remove accounted method
-            _parser.Components.Remove(prot);
-            BuildMethod(prot);
-        }
+        DecrementIndent();
     }
 
     protected override void ConstructFields(List<FieldComponent> fields)
     {
-        foreach (var field in fields)
+        var publicFields = fields.Where(x => x.AccessModifier == "public").ToList();
+        var privateFields = fields.Where(x => x.AccessModifier == "private" || string.IsNullOrEmpty(x.AccessModifier)).ToList();
+        var protectedFields = fields.Where(x => x.AccessModifier == "protected").ToList();
+
+        // Try build public fields
+        if (publicFields != null && publicFields.Count > 0)
         {
-            // Remove accounted field
-            _parser.Components.Remove(field);
-            BuildField(field);
+            Append("public:");
+            IncrementIndent();
+            foreach (var pub in publicFields)
+            {
+                // Remove accounted field
+                _parser.Components.Remove(pub);
+                BuildField(pub);
+            }
+            Append();
+            DecrementIndent();
         }
 
+        // Try build protected fields
+        if (protectedFields != null && protectedFields.Count > 0)
+        {
+            Append("protected:");
+            IncrementIndent();
+            foreach (var prot in protectedFields)
+            {
+                // Remove accounted field
+                _parser.Components.Remove(prot);
+                BuildField(prot);
+            }
+            Append();
+            DecrementIndent();
+        }
+    
+        // Try build private fields
+        Append("private:");
+        IncrementIndent();
+        foreach (var priv in privateFields)
+        {
+            // Remove accounted field
+            _parser.Components.Remove(priv);
+            BuildField(priv);
+        }
         Append();
+        DecrementIndent();
     }
 
     protected override void ConvertProperty(in ClassComponent classComponent)
@@ -470,20 +501,31 @@ internal sealed class CppLinker : Linker
 
     private static string TryConvertTypeToCpp(string type)
     {
-        if (_commonTypeConversions.TryGetValue(type, out var javaType))
+        // TO-DO: Convert array types
+        var span = type.AsSpan();
+        var typeName = type;
+        var suffix = string.Empty;
+        var tryArrayIndex = type.Index('[');
+        if (tryArrayIndex != -1)
         {
-            return javaType;
+            span = span[..tryArrayIndex];
         }
 
-        return type;
+        // Convert type name
+        if (_commonTypeConversions.TryGetValue(type, out var javaType))
+        {
+            return $"{type}";
+        }
+
+        return $"{type}";
     }
 
     private static string ConvertMethodNameToCpp(string name)
     {
         var span = name.AsSpan();
-        var javaName = span[0..1];
+        var cppName = span[0..1];
 
-        return $"{javaName.ToString().ToLower()}{span[1..].ToString()}";
+        return $"{cppName.ToString().ToLower()}{span[1..].ToString()}";
     }
 
     #endregion

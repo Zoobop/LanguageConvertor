@@ -8,6 +8,7 @@ internal sealed class JavaLinker : Linker
 {
     private static readonly IDictionary<string, string> _commonTypeConversions = new Dictionary<string, string>
     {
+        {"bool", "boolean"},
         {"byte", "byte"},
         {"char", "char"},
         {"short", "short"},
@@ -41,13 +42,13 @@ internal sealed class JavaLinker : Linker
 
     protected override string FormatImport(string importName)
     {
-        return $"{GetImportKeyword()} {importName}.*;";
+        return $"{GetImportKeyword()} {importName}.Java.Example.*;";
     }
 
     protected override string FormatContainer(in ContainerComponent containerComponent)
     {
         // Format container
-        return $"{GetContainerKeyword()} {containerComponent.Name};";
+        return $"{GetContainerKeyword()} {containerComponent.Name}.Java;";
     }
 
     protected override string FormatClass(in ClassComponent classComponent)
@@ -100,6 +101,13 @@ internal sealed class JavaLinker : Linker
         // Format method definition
         var format = new StringBuilder();
 
+        // Try add override
+        var special = methodComponent.SpecialModifier;
+        if (!string.IsNullOrEmpty(special) && methodComponent.IsOverride)
+        {
+            format.Append($"@Override\n{GetCurrentIndent()}");
+        }
+
         // Try add accessor
         var accessor = methodComponent.AccessModifier;
         if (!string.IsNullOrEmpty(accessor))
@@ -107,9 +115,8 @@ internal sealed class JavaLinker : Linker
             format.Append($"{accessor} ");
         }
 
-        // Try add special
-        var special = methodComponent.SpecialModifier;
-        if (!string.IsNullOrEmpty(special))
+        // Try get special
+        if (!string.IsNullOrEmpty(special) && !methodComponent.IsOverride)
         {
             format.Append($"{special} ");
         }
@@ -130,11 +137,11 @@ internal sealed class JavaLinker : Linker
             // Format each parameter
             foreach (var (argName, argType) in methodComponent.Parameters)
             {
-                format.Append($"{TryConvertTypeToJava(argType)} {argName},");
+                format.Append($"{TryConvertTypeToJava(argType)} {argName}, ");
             }
 
-            // Remove last comma
-            format.Remove(format.Length - 1, 1);
+            // Trim end
+            format.Remove(format.Length - 2, 2);
         }
         format.Append(')');
 

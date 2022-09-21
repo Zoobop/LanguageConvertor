@@ -49,6 +49,7 @@ internal abstract class Linker
 
     protected void IncrementIndent() => ++_indentLevel;
     protected void DecrementIndent() => --_indentLevel;
+    protected string GetCurrentIndent() => new string(' ', _indentLevel * 4);
 
     public abstract IEnumerable<string> BuildFileLines();
     public abstract string BuildFile();
