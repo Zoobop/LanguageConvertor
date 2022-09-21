@@ -1,53 +1,60 @@
 ﻿using LanguageConvertor.Components;
 using LanguageConvertor.Core;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace LanguageConvertor.Languages;
 
-internal sealed class JavaLinker : Linker
+internal sealed class CppLinker : Linker
 {
     private static readonly IDictionary<string, string> _commonTypeConversions = new Dictionary<string, string>
     {
-        {"byte", "byte"},
-        {"char", "char"},
-        {"short", "short"},
-        {"int", "int"},
-        {"long", "long"},
-        {"object", "Object"},
-        {"string", "String"},
+        {"bool", "bool"},
+        {"sbyte", "int8_t"},
+        {"char", "int8_t"},
+        {"short", "int16_t"},
+        {"int", "int32_t"},
+        {"long", "int64_t"},
+        {"byte", "uint8_t"},
+        {"ushort", "uint16_t"},
+        {"uint", "uint32_t"},
+        {"ulong", "uint64_t"},
+        {"string", "std::string"},
     };
 
-    public JavaLinker(string[] data) : base(data)
+    public CppLinker(string[] data) : base(data)
     {
-        
     }
 
     protected override ConvertibleLanguage GetLanguage()
     {
-        return ConvertibleLanguage.Java;
+        return ConvertibleLanguage.Cpp;
     }
 
     protected override string GetImportKeyword()
     {
-        return "import";
+        return "#include";
     }
 
     protected override string GetContainerKeyword()
     {
-        return "package";
+        return "namespace";
     }
 
     #region Formatting
 
     protected override string FormatImport(string importName)
     {
-        return $"{GetImportKeyword()} {importName}.*;";
+        return $"{GetImportKeyword()} \"{importName}.h\"";
     }
 
     protected override string FormatContainer(in ContainerComponent containerComponent)
     {
         // Format container
-        return $"{GetContainerKeyword()} {containerComponent.Name};";
+        return $"{GetContainerKeyword()} {containerComponent.Name}";
     }
 
     protected override string FormatClass(in ClassComponent classComponent)
@@ -55,7 +62,7 @@ internal sealed class JavaLinker : Linker
         // Format class definition
         var format = new StringBuilder();
 
-        // Try add accessor
+/*        // Try add accessor
         var accessor = classComponent.AccessModifier;
         if (!string.IsNullOrEmpty(accessor))
         {
@@ -69,7 +76,7 @@ internal sealed class JavaLinker : Linker
             var javaSpecial = special;
 
             format.Append($"{javaSpecial} ");
-        }
+        }*/
 
         // Add 'class' keyword
         format.Append("class ");
@@ -82,14 +89,14 @@ internal sealed class JavaLinker : Linker
         var parentClass = classComponent.ParentClass;
         if (!string.IsNullOrEmpty(parentClass))
         {
-            format.Append($" extends {parentClass}");
+            format.Append($" : public {parentClass}");
         }
 
         // Try add interface(s)
         var interfaces = classComponent.Interfaces;
         if (interfaces.Count > 0)
         {
-            format.Append($" implements {string.Join(", ", interfaces)}");
+            format.Append($", public {string.Join(", public ", interfaces)}");
         }
 
         return format.ToString();
@@ -115,12 +122,12 @@ internal sealed class JavaLinker : Linker
         }
 
         // Add return type
-        var returnType = TryConvertTypeToJava(methodComponent.Type);
+        var returnType = TryConvertTypeToCpp(methodComponent.Type);
         format.Append($"{returnType} ");
 
         // Add name
         var name = methodComponent.Name;
-        format.Append(ConvertMethodNameToJava(name));
+        format.Append(ConvertMethodNameToCpp(name));
 
         // Try add parameters
         var hasParameters = methodComponent.HasParameters;
@@ -130,7 +137,7 @@ internal sealed class JavaLinker : Linker
             // Format each parameter
             foreach (var (argName, argType) in methodComponent.Parameters)
             {
-                format.Append($"{TryConvertTypeToJava(argType)} {argName},");
+                format.Append($"{TryConvertTypeToCpp(argType)} {argName},");
             }
 
             // Remove last comma
@@ -161,7 +168,7 @@ internal sealed class JavaLinker : Linker
         }
 
         // Add type
-        var type = TryConvertTypeToJava(propertyComponent.Type);
+        var type = TryConvertTypeToCpp(propertyComponent.Type);
         format.Append($"{type} ");
 
         // Add name
@@ -222,7 +229,7 @@ internal sealed class JavaLinker : Linker
         }
 
         // Add type
-        var type = TryConvertTypeToJava(fieldComponent.Type);
+        var type = TryConvertTypeToCpp(fieldComponent.Type);
         format.Append($"{type} ");
 
         // Add name
@@ -341,7 +348,7 @@ internal sealed class JavaLinker : Linker
                 var accessor = (!string.IsNullOrEmpty(property.WriteAccessModifier)) ? property.WriteAccessModifier : "public";
 
                 var argName = "value";
-                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new KeyValuePair<string, string>(argName, TryConvertTypeToJava(property.Type)));
+                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new KeyValuePair<string, string>(argName, TryConvertTypeToCpp(property.Type)));
                 methodComponent.AddToBody($"{currentIndent}{fieldComponent.Name} = {argName};");
                 classComponent.AddMethod(methodComponent);
             }
@@ -356,6 +363,17 @@ internal sealed class JavaLinker : Linker
     {
         // FORMATTING
 
+        // Pragma once
+        Append("#pragma once");
+        Append();
+
+        // Imports
+        foreach (var import in _parser.Imports)
+        {
+            Append(FormatImport(import));
+        }
+        Append();
+
         // Build containers
         var containers = _parser.Containers;
         foreach (var container in containers)
@@ -363,13 +381,6 @@ internal sealed class JavaLinker : Linker
             // Remove accounted container
             _parser.Components.Remove(container);
             BuildContainer(container);
-
-            // Imports
-            foreach (var import in _parser.Imports)
-            {
-                Append(FormatImport(import));
-            }
-            Append();
 
             // Build classes
             ConstructClass(container.Classes);
@@ -403,8 +414,9 @@ internal sealed class JavaLinker : Linker
         var formatContainer = FormatContainer(containerComponent);
 
         // Write formatted data
-        Append(formatContainer);        
-        Append();
+        Append(formatContainer);
+        Append("{");
+        IncrementIndent();
     }
 
     private void BuildClass(in ClassComponent classComponent)
@@ -456,7 +468,7 @@ internal sealed class JavaLinker : Linker
 
     #region Helpers
 
-    private static string TryConvertTypeToJava(string type)
+    private static string TryConvertTypeToCpp(string type)
     {
         if (_commonTypeConversions.TryGetValue(type, out var javaType))
         {
@@ -466,7 +478,7 @@ internal sealed class JavaLinker : Linker
         return type;
     }
 
-    private static string ConvertMethodNameToJava(string name)
+    private static string ConvertMethodNameToCpp(string name)
     {
         var span = name.AsSpan();
         var javaName = span[0..1];

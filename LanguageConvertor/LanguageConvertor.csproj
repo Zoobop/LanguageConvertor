@@ -11,8 +11,4 @@
       <Compile Remove="Tests\Input\Input.cs" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Tests\Output\" />
-    </ItemGroup>
-
 </Project>

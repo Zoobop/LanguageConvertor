@@ -2,7 +2,7 @@ package Output;
 
 import Abstraction.*;
 
-public class FromCSharp
+public class FromCSharp extends Base implements IInterface
 {
     public int number = 0;
     public float weight;
@@ -10,12 +10,12 @@ public class FromCSharp
     private int intPropertyBackingField;
     private IAnimal animalBackingField;
     
-    public void Method()
+    public void method()
     {
-        Console.WriteLine("Hello World");
+        
     }
     
-    public static void FindAnimal(IAnimal animal)
+    public static void findAnimal(IAnimal animal)
     {
         
     }
@@ -40,7 +40,7 @@ public class FromCSharp
         return animalBackingField;
     }
     
-    private static int Add(int[] numbers,int count)
+    private static int add(int[] numbers,int count)
     {
         var sum = 0;
         for (var i = 0; i < count; i++)
@@ -50,7 +50,7 @@ public class FromCSharp
         return sum;
     }
     
-    void Explode(boolean sure)
+    void explode(bool sure)
     {
         
     }
@@ -60,7 +60,7 @@ public class FromCSharp
         animalBackingField = value;
     }
     
-    protected static void Func(String obj)
+    protected static void func(String obj)
     {
         
     }

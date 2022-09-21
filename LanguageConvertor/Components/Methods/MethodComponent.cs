@@ -20,6 +20,7 @@ internal sealed class MethodComponent : IComponent
     public bool IsPublic { get => AccessModifier == "public"; }
     public bool IsProtected { get => AccessModifier == "protected"; }
     public bool IsAbstract { get => SpecialModifier == "abstract"; }
+    public bool IsOverride { get => SpecialModifier == "override"; }
     public bool HasParameters { get => Parameters != null && Parameters.Count > 0; }
 
     public MethodComponent(string? accessModifier, string? specialModifier, string type, string name, Dictionary<string, string> parameters)

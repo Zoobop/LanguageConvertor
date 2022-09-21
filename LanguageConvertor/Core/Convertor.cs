@@ -23,7 +23,7 @@ public sealed class Convertor
 
         Linker = language switch
         {
-            //ConvertibleLanguage.Cpp => new CppLinker(_fileData),
+            ConvertibleLanguage.Cpp => new CppLinker(_fileData),
             _ => new JavaLinker(_fileData)
         };
     }
@@ -36,7 +36,7 @@ public sealed class Convertor
 
         Linker = language switch
         {
-            //ConvertibleLanguage.Cpp => new CppLinker(_fileData),
+            ConvertibleLanguage.Cpp => new CppLinker(_fileData),
             _ => new JavaLinker(_fileData)
         };
     }

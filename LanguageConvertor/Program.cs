@@ -18,8 +18,8 @@ using System.Linq;
 const string Path = @"C:\dev\LanguageConvertor\LanguageConvertor\Tests\";
 //var lines = File.ReadAllLines($@"{Path}Input\Input.cs");
 
-Convertor convertor = new Convertor($@"{Path}Input\FromCSharp.cs", ConvertibleLanguage.Java);
-convertor.ToFile($@"C:\Users\Brandon\IdeaProjects\Example\src\Output");
+Convertor convertor = new Convertor($@"{Path}Input\FromCSharp.cs", ConvertibleLanguage.Cpp);
+convertor.ToFile($@"{Path}\Output");
 
 //JavaLinker javaLinker = new JavaLinker(lines);
 //var data = javaLinker.BuildFileLines();
