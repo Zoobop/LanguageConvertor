@@ -1,40 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ConversionOutput
+﻿public static void Scopes1()
 {
-    public class Test1 : Base, IInterface, IEnumerable<string>
-    {
-        public string? StringProperty { get; set; }
-        public int IntProperty { get; }
-
-        public int number = 0;
-        public float weight;
-
-        void Explode(bool sure)
-        {
-
-        }
-
-        protected static T Generic<T>(T obj)
-        {
-
-        }
-
-        public void Method()
-        {   
-        }
-
-        private static int Add(int[] numbers)
-        {
-        }
-    }
+	{
+		{
+			{
+			
+			}
+		}
+	}
 }
 
-public class Test2 : ConversionOutput.Test1
+public static void Scopes2()
 {
-    public int integer;
+	{
+		{
+		
+		}
+	}
+}
+
+public static void Scopes3()
+{
+	{
+		
+	}
 }

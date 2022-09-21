@@ -6,9 +6,21 @@ using System.Collections.Generic;
 
 namespace LanguageConvertor.Languages;
 
-internal class JavaLinker : Linker
+internal sealed class JavaLinker : Linker
 {
-    public JavaLinker(IEnumerable<string> data) : base(data)
+    private static readonly IDictionary<string, string> _commonTypeConversions = new Dictionary<string, string>
+    {
+        {"byte", "byte"},
+        {"bool", "boolean"},
+        {"char", "char"},
+        {"short", "short"},
+        {"int", "int"},
+        {"long", "long"},
+        {"object", "Object"},
+        {"string", "String"},
+    };
+
+    public JavaLinker(string[] data) : base(data)
     {
     }
 
@@ -27,31 +39,17 @@ internal class JavaLinker : Linker
         return "package";
     }
 
+    #region Formatting
+
     protected override string FormatImport(string importName)
     {
-        return $"{GetImportKeyword()} {importName};";
+        return $"{GetImportKeyword()} {importName}.*;";
     }
 
     protected override string FormatContainer(in ContainerComponent containerComponent)
     {
         // Format container
-        var format = new StringBuilder();
-
-        // Add container keyword
-        format.Append($"{GetContainerKeyword()} ");
-
-        // Add name
-        var name = containerComponent.Name;
-        format.Append(name);
-
-        // Try add file-scoped indicator
-        var isFileScoped = containerComponent.IsFileScoped;
-        if (isFileScoped)
-        {
-            format.Append(';');
-        }
-
-        return format.ToString();
+        return $"{GetContainerKeyword()} {containerComponent.Name};";
     }
 
     protected override string FormatClass(in ClassComponent classComponent)
@@ -70,7 +68,9 @@ internal class JavaLinker : Linker
         var special = classComponent.SpecialModifier;
         if (!string.IsNullOrEmpty(special))
         {
-            format.Append($"{special} ");
+            var javaSpecial = special;
+
+            format.Append($"{javaSpecial} ");
         }
 
         // Add 'class' keyword
@@ -117,7 +117,7 @@ internal class JavaLinker : Linker
         }
 
         // Add return type
-        var returnType = methodComponent.Type;
+        var returnType = TryConvertTypeToJava(methodComponent.Type);
         format.Append($"{returnType} ");
 
         // Add name
@@ -132,7 +132,7 @@ internal class JavaLinker : Linker
             // Format each parameter
             foreach (var (argName, argType) in methodComponent.Parameters)
             {
-                format.Append($"{argType} {argName},");
+                format.Append($"{TryConvertTypeToJava(argType)} {argName},");
             }
 
             // Remove last comma
@@ -163,7 +163,7 @@ internal class JavaLinker : Linker
         }
 
         // Add type
-        var type = propertyComponent.Type;
+        var type = TryConvertTypeToJava(propertyComponent.Type);
         format.Append($"{type} ");
 
         // Add name
@@ -224,7 +224,7 @@ internal class JavaLinker : Linker
         }
 
         // Add type
-        var type = fieldComponent.Type;
+        var type = TryConvertTypeToJava(fieldComponent.Type);
         format.Append($"{type} ");
 
         // Add name
@@ -244,6 +244,10 @@ internal class JavaLinker : Linker
         return format.ToString();
     }
 
+    #endregion
+
+    #region Construction
+
     protected override void ConstructClass(List<ClassComponent> classes)
     {
         foreach (var classComponent in classes)
@@ -260,6 +264,10 @@ internal class JavaLinker : Linker
 
             // Build methods
             ConstructMethods(classComponent.Methods);
+
+            DecrementIndent();
+            Append("}");
+            Append();
         }
     }
 
@@ -310,16 +318,22 @@ internal class JavaLinker : Linker
     {
         foreach (var property in classComponent.Properties)
         {
+            // Remove account property
+            _parser.Components.Remove(property);
+
             // Create the backing field
             var span = property.Name.AsSpan();
             var name = $"{span[0].ToString().ToLower()}{span[1..]}";
             var fieldComponent = new FieldComponent("private", property.SpecialModifier, property.Type, $"{name}BackingField", property.Value);
             classComponent.AddField(fieldComponent);
 
+            var currentIndent = new string(' ', _indentLevel * 4);
+
             // Try create getter
             if (property.CanRead)
             {
                 var methodComponent = new MethodComponent(property.AccessModifier, property.SpecialModifier, property.Type, $"get{property.Name}");
+                methodComponent.AddToBody($"{currentIndent}return {fieldComponent.Name};");
                 classComponent.AddMethod(methodComponent);
             }
 
@@ -328,23 +342,21 @@ internal class JavaLinker : Linker
             {
                 var accessor = (!string.IsNullOrEmpty(property.WriteAccessModifier)) ? property.WriteAccessModifier : "public";
 
-                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new KeyValuePair<string, string>("value", property.Type));
+                var argName = "value";
+                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new KeyValuePair<string, string>(argName, TryConvertTypeToJava(property.Type)));
+                methodComponent.AddToBody($"{currentIndent}{fieldComponent.Name} = {argName};");
                 classComponent.AddMethod(methodComponent);
             }
         }
     }
 
-    public override IEnumerable<string> BuildFile()
+    #endregion
+
+    #region FileBuilding
+
+    public override IEnumerable<string> BuildFileLines()
     {
         // FORMATTING
-        var format = new List<string>(_parser.TotalCount);
-
-        // Imports
-        foreach (var import in _parser.Imports)
-        {
-            Append(FormatImport(import));
-        }
-        Append();
 
         // Build containers
         var containers = _parser.Containers;
@@ -353,6 +365,13 @@ internal class JavaLinker : Linker
             // Remove accounted container
             _parser.Components.Remove(container);
             BuildContainer(container);
+
+            // Imports
+            foreach (var import in _parser.Imports)
+            {
+                Append(FormatImport(import));
+            }
+            Append();
 
             // Build classes
             ConstructClass(container.Classes);
@@ -365,29 +384,20 @@ internal class JavaLinker : Linker
             }
         }
 
-        // Build classes
-        if (_parser.Components.Count > 0)
+        // Return formatted data
+        return _formattedData;
+    }
+
+    public override string BuildFile()
+    {
+        var lines = BuildFileLines();
+        var builder = new StringBuilder();
+        foreach (var line in lines)
         {
-            Append();
-
-            var classes = _parser.Components
-                .Where(x => x.GetType() == typeof(ClassComponent))
-                .Select(x => (ClassComponent)x)
-                .ToList();
-
-            // Build classes
-            ConstructClass(classes);
-
-            // Close scopes
-            while (_indentLevel != 0)
-            {
-                DecrementIndent();
-                Append("}");
-            }
+            builder.AppendLine(line);
         }
 
-        // Return formatted data
-        return format;
+        return builder.ToString();
     }
 
     private void BuildContainer(in ContainerComponent containerComponent)
@@ -395,14 +405,7 @@ internal class JavaLinker : Linker
         var formatContainer = FormatContainer(containerComponent);
 
         // Write formatted data
-        Append(formatContainer);
-
-        if (!containerComponent.IsFileScoped)
-        {
-            Append("{");
-            IncrementIndent();
-        }
-        
+        Append(formatContainer);        
         Append();
     }
 
@@ -423,11 +426,13 @@ internal class JavaLinker : Linker
         // Write formatted data
         Append(formatMethod);
         Append("{"); // Enter scope
-        IncrementIndent();
-        
-        Append(); // Method body
 
-        DecrementIndent();
+        // Method body
+        foreach (var line in methodComponent.Body)
+        {
+            Append(line);
+        }
+
         Append("}"); // Exit scope
         Append();
     }
@@ -448,4 +453,20 @@ internal class JavaLinker : Linker
         // Write formatted data
         Append(formatField);
     }
+
+    #endregion
+
+    #region Helpers
+
+    private static string TryConvertTypeToJava(string type)
+    {
+        if (_commonTypeConversions.TryGetValue(type, out var javaType))
+        {
+            return javaType;
+        }
+
+        return type;
+    }
+
+    #endregion
 }

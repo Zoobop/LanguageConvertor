@@ -16,7 +16,7 @@ internal abstract class Linker
     protected readonly List<string> _formattedData;
     protected int _indentLevel = 0;
     
-    public Linker(IEnumerable<string> data)
+    public Linker(string[] data)
     {
         _data = data;
         _parser = new Parser(data);
@@ -44,11 +44,12 @@ internal abstract class Linker
         var indent = new string(' ', _indentLevel * 4);
         var data = $"{indent}{text}";
         _formattedData.Add(data);
-        Console.WriteLine(data);
+        //Console.WriteLine(data);
     }
 
     protected void IncrementIndent() => ++_indentLevel;
     protected void DecrementIndent() => --_indentLevel;
 
-    public abstract IEnumerable<string> BuildFile();
+    public abstract IEnumerable<string> BuildFileLines();
+    public abstract string BuildFile();
 }

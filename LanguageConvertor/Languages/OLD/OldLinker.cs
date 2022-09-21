@@ -35,7 +35,7 @@ public abstract class OldLinker
     {
         _data = data;
 
-        var parser = new Parser(data);
+        var parser = new Parser(data.ToArray());
         //_imports = parser.GetImports();
         //_container = parser.GetContainer(GetLanguage());
         //_classModifers = parser.GetClassModifiers();

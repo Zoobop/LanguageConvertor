@@ -2,7 +2,6 @@
 using LanguageConvertor.Core;
 using LanguageConvertor.Languages;
 using System.Linq;
-using System.Security.Claims;
 
 //const string fieldData = "public static int Number = 0;";
 //const string propertyData = "public static int Number { get; private set; } = 0;";
@@ -16,13 +15,71 @@ using System.Security.Claims;
 //var @class = ClassComponent.Parse(classData);
 //var container = ContainerComponent.Parse(containerData);
 
-const string Path = @"C:\dev\LanguageConvertor\LanguageConvertor\Tests\Input\Input.cs";
-var lines = File.ReadAllLines(Path);
+const string Path = @"C:\dev\LanguageConvertor\LanguageConvertor\Tests\";
+var lines = File.ReadAllLines($@"{Path}Input\Input.cs");
 
-Parser parser = new Parser(lines);
-JavaLinker linker = new JavaLinker(lines);
-var data = linker.BuildFile();
+Convertor convertor = new Convertor($@"{Path}Input\Input.cs", ConvertibleLanguage.Java);
+convertor.ToFile($@"{Path}\Output\");
 
+//JavaLinker javaLinker = new JavaLinker(lines);
+//var data = javaLinker.BuildFileLines();
+
+/*var span = data.Replace("\r", "").AsSpan();
+
+// Begin parse
+while (span.Length > 0)
+{
+    var newLineIndex = span.IndexOf('\n');
+    if (newLineIndex == -1) break;
+
+    var buffer = span[..newLineIndex++];
+    span = span[newLineIndex..];
+
+    var currentString = buffer.Trim().ToString();
+    if (string.IsNullOrEmpty(currentString) || currentString.Contains('{') || currentString.Contains('}'))
+    {
+        continue;
+    }
+    else
+    {
+        var method = MethodComponent.Parse(currentString);
+
+        if (method.IsAbstract)
+        {
+            continue;
+        }
+        else
+        {
+            // Find the start of scope
+            var bodySpan = span[1..];
+            var scopeIndent = 0;
+            while (scopeIndent >= 0)
+            {
+                var index = bodySpan.IndexOf('\n');
+                var currentLine = bodySpan[..index++].TrimStart();
+
+                if (currentLine.Contains('}')) scopeIndent--;
+
+                Console.WriteLine($"{new string(' ', Math.Max(scopeIndent * 4, 0))}{currentLine}");
+                bodySpan = bodySpan[index..];
+
+                if (currentLine.Contains('{')) scopeIndent++;
+            }
+
+            var newIndex = span.Length - bodySpan.Length;
+            span = span[++newIndex..];
+        }
+    }
+}
+*/
+//Parser parser = new Parser(data);
+
+//JavaLinker linker = new JavaLinker(lines);
+//var data = linker.BuildFile();
+
+//var span = data.AsSpan();
+
+//File.WriteAllText($@"C:\Users\Brandon\IdeaProjects\Example\src\Output\FromCSharp.java", data);
 
 /*// AGGREGATE
 var allComponents = new List<IComponent>(parser.TotalCount);

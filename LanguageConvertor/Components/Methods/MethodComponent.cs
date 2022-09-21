@@ -12,15 +12,17 @@ internal sealed class MethodComponent : IComponent
     public string? SpecialModifier { get; set; }
     public string Type { get; set; }
     public string Name { get; set; }
-    public IDictionary<string, string>? Parameters { get; }
+    public Dictionary<string, string> Parameters { get; } = new Dictionary<string, string>();
+    public List<string> Body { get; set; } = new List<string>();
 
     public bool IsStatic { get => SpecialModifier == "static"; }
     public bool IsPrivate { get => AccessModifier == "private" || AccessModifier == null; }
     public bool IsPublic { get => AccessModifier == "public"; }
     public bool IsProtected { get => AccessModifier == "protected"; }
+    public bool IsAbstract { get => SpecialModifier == "abstract"; }
     public bool HasParameters { get => Parameters != null && Parameters.Count > 0; }
 
-    public MethodComponent(string? accessModifier, string? specialModifier, string type, string name, IDictionary<string, string>? parameters)
+    public MethodComponent(string? accessModifier, string? specialModifier, string type, string name, Dictionary<string, string> parameters)
     {
         AccessModifier = accessModifier;
         SpecialModifier = specialModifier;
@@ -35,12 +37,25 @@ internal sealed class MethodComponent : IComponent
         SpecialModifier = specialModifier;
         Type = type;
         Name = name;
-        Parameters = new Dictionary<string,string>();
-        foreach (var pair in argPairs)
+        foreach (var (argName, argType) in argPairs)
         {
-            Parameters.Add(pair);
+            Parameters.Add(argName, argType);
         }
     }
+
+    #region Utility
+
+    public void AddToBody(string line)
+    {
+        Body.Add(line);
+    }
+
+    public void AddToBody(IEnumerable<string> lines)
+    {
+        Body.AddRange(lines);
+    }
+
+    #endregion
 
     public static MethodComponent Parse(string methodData)
     {
@@ -124,12 +139,11 @@ internal sealed class MethodComponent : IComponent
         return Name;
     }
 
-    public bool IsScope()
-    {
-        return true;
-    }
+    #region IComponent
 
     public void AddComponent(in IComponent component)
     {
     }
+
+    #endregion
 }

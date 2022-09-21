@@ -1,8 +1,9 @@
 ﻿using LanguageConvertor.Components;
+using System.Text;
 
 namespace LanguageConvertor.Core;
 
-internal class Parser
+internal sealed class Parser
 {
 
     internal sealed class ComponentPack
@@ -33,16 +34,19 @@ internal class Parser
 
     private Stack<ComponentPack> _scopeStack { get; } = new Stack<ComponentPack>();
 
-    public Parser(in IEnumerable<string> data)
+    public Parser(in string[] data)
     {
         Parse(data);
     }
 
-    private void Parse(in IEnumerable<string> data)
+    private void Parse(in string[] data)
     {
         // Begin parse
-        foreach (var line in data)
+        var count = data.Length;
+        for (var i = 0; i < count; i++)
         {
+            var line = data[i];
+
             // Invalid line
             if (IsEmpty(line) || IsBeginScope(line)) continue;
 
@@ -72,6 +76,13 @@ internal class Parser
             else if (IsMethod(line))
             {
                 var method = ParseMethod(line);
+
+                // Get method body if applicable
+                if (!method.IsAbstract)
+                {
+                    var methodBody = GetMethodBody(data, ref i);
+                    method.AddToBody(methodBody);
+                }
 
                 Methods.Add(method);
                 Feed(method, ComponentType.Method, true);
@@ -496,6 +507,35 @@ internal class Parser
     #endregion
 
     #region Helpers
+
+    private List<string> GetMethodBody(in string[] data, ref int index)
+    {
+        var methodBody = new List<string>();
+
+        // Advance index passed method scope initiator
+        index += 2;
+
+        var scopeCount = 1;
+        while (scopeCount > 0)
+        {
+            // Get line
+            var line = data[index++].Trim(' ', '\t');
+
+            // Update scope counter
+            if (line.Contains('}')) --scopeCount;
+            var indent = new string(' ', scopeCount * 4);
+            if (line.Contains('{')) ++scopeCount;
+
+            // Break if end all local scopes
+            if (scopeCount == 0) break;
+
+            methodBody.Add($"{indent}{line}");
+        }
+
+        // Rewind to method end scope to pop off scope stack
+        index -= 2;
+        return methodBody;
+    }
 
     private void Feed(in IComponent component, ComponentType type, bool isScope = false)
     {

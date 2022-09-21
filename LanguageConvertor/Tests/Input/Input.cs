@@ -1,47 +1,44 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Abstraction;
 
-namespace ConversionOutput;
-
-public class Test1
+namespace Output
 {
-    public string? StringProperty { get; set; }
-    public int IntProperty { get; }
-
-    public int number = 0;
-    public float weight;
-
-    public void Method()
-    {   
-    }
-
-    private static int Add(int[] numbers)
+    public class FromCSharp
     {
+        public string StringProperty { get; set; }
+        public int IntProperty { get; }
+        public IAnimal Animal { get; private set; }
 
+        public int number = 0;
+        public float weight;
+
+        public void Method()
+        {
+            Console.WriteLine("Hello World");
+        }
+
+        private static int Add(int[] numbers, int count)
+        {
+            var sum = 0;
+            for (var i = 0; i < count; i++)
+            {
+                sum += numbers[i];
+            }
+            return sum;
+        }
+
+        void Explode(bool sure)
+        {
+
+        }
+
+        protected static void Func(string obj)
+        {
+
+        }
+
+        public static void FindAnimal(IAnimal animal)
+        {
+
+        }
     }
-
-    void Explode(bool sure)
-    {
-
-    }
-
-    protected static T Generic<T>(T obj)
-    {
-
-    }
-
-    public void Method()
-    {   
-    }
-    private static int Add(int[] numbers)
-    {
-    }
-}
-
-public class Test2 : ConversionOutput.Test1
-{
-    public int integer;
 }

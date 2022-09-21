@@ -2,13 +2,13 @@
 
 namespace LanguageConvertor.Core;
 
-public class Convertor
+public sealed class Convertor
 {
     private readonly string _filePath;
-    private readonly IEnumerable<string> _fileData;
+    private readonly string[] _fileData;
     private readonly ConvertibleLanguage _language;
 
-    public OldLinker Linker { get; }
+    internal Linker Linker { get; }
 
     public Convertor(string filePath, ConvertibleLanguage language)
     {
@@ -16,18 +16,19 @@ public class Convertor
         {
             throw new FileNotFoundException("Could not find file!");
         }
+
         _filePath = filePath;
         _language = language;
         _fileData = File.ReadAllLines(filePath);
 
         Linker = language switch
         {
-            ConvertibleLanguage.Cpp => new CppSyntaxLinker(_fileData),
-            _ => new OldJavaSyntaxLinker(_fileData)
+            //ConvertibleLanguage.Cpp => new CppLinker(_fileData),
+            _ => new JavaLinker(_fileData)
         };
     }
     
-    public Convertor(IEnumerable<string> data, ConvertibleLanguage language)
+    public Convertor(string[] data, ConvertibleLanguage language)
     {
         _filePath = string.Empty;
         _language = language;
@@ -35,29 +36,34 @@ public class Convertor
 
         Linker = language switch
         {
-            ConvertibleLanguage.Cpp => new CppSyntaxLinker(_fileData),
-            _ => new OldJavaSyntaxLinker(_fileData)
+            //ConvertibleLanguage.Cpp => new CppLinker(_fileData),
+            _ => new JavaLinker(_fileData)
         };
     }
 
-    public IEnumerable<string> GetConvertedData()
+    public IEnumerable<string> GetDataAsLines()
     {
-        return Linker.GetFormattedFileData();
+        return Linker.BuildFileLines();
     }
 
-    public void NewFile(string exportPath)
+    public string GetData()
     {
-        var startIndex = _filePath.LastIndexOf('\\');
-        var endIndex = _filePath.LastIndexOf('.');
-        var fileName = _filePath.Substring(startIndex, endIndex - startIndex);
+        return Linker.BuildFile();
+    }
+
+    public void ToFile(string exportPath)
+    {
+        var span = _filePath.AsSpan();
+        var startIndex = span.LastIndexOf('\\');
+        var endIndex = span.LastIndexOf('.');
+        var fileName = span[startIndex..endIndex].ToString();
         var extension = _language switch
         {
             ConvertibleLanguage.Cpp => ".hpp",
             _ => ".java"
         };
 
-        var convertedData = GetConvertedData();
-        
+        var convertedData = GetDataAsLines();
         var completePath = $"{exportPath}{fileName}{extension}";
         File.WriteAllLines(completePath, convertedData);
     } 
