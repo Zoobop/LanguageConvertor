@@ -16,10 +16,10 @@ using System.Linq;
 //var container = ContainerComponent.Parse(containerData);
 
 const string Path = @"C:\dev\LanguageConvertor\LanguageConvertor\Tests\";
-var lines = File.ReadAllLines($@"{Path}Input\Input.cs");
+//var lines = File.ReadAllLines($@"{Path}Input\Input.cs");
 
-Convertor convertor = new Convertor($@"{Path}Input\Input.cs", ConvertibleLanguage.Java);
-convertor.ToFile($@"{Path}\Output\");
+Convertor convertor = new Convertor($@"{Path}Input\FromCSharp.cs", ConvertibleLanguage.Java);
+convertor.ToFile($@"C:\Users\Brandon\IdeaProjects\Example\src\Output");
 
 //JavaLinker javaLinker = new JavaLinker(lines);
 //var data = javaLinker.BuildFileLines();

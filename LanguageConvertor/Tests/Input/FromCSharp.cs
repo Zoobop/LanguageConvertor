@@ -2,7 +2,7 @@ using Abstraction;
 
 namespace Output
 {
-    public class FromCSharp
+    public class FromCSharp : Base, IInterface
     {
         public string StringProperty { get; set; }
         public int IntProperty { get; }
@@ -13,7 +13,7 @@ namespace Output
 
         public void Method()
         {
-            Console.WriteLine("Hello World");
+            
         }
 
         private static int Add(int[] numbers, int count)

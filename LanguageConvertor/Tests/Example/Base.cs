@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace Abstraction;
 
-public class IAnimal
+public class Base
 {
+}
 
+public interface IInterface
+{
 }
