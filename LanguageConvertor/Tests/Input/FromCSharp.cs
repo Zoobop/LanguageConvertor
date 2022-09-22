@@ -10,6 +10,18 @@ namespace Output
         public int number = 0;
         public float weight;
 
+        public FromCSharp()
+        {
+            StringProperty = "NULL";
+            IntProperty = 0;
+        }
+
+        public FromCSharp(string str, int integer)
+        {
+            StringProperty = str;
+            IntProperty = integer;
+        }
+
         public void Method()
         {
             

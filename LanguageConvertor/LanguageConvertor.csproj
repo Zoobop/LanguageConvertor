@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Compile Remove="Tests\Input\FromCSharp.cs" />
       <Compile Remove="Tests\Input\Input.cs" />
     </ItemGroup>
 

@@ -26,6 +26,8 @@ internal sealed class CppLinker : Linker
         {"string", "std::string"},
     };
 
+    private static readonly string _arrayConversion = "*";
+
     public CppLinker(string[] data) : base(data)
     {
     }
@@ -92,13 +94,6 @@ internal sealed class CppLinker : Linker
         // Format method definition
         var format = new StringBuilder();
 
-        // Try add accessor
-        //var accessor = methodComponent.AccessModifier;
-        //if (!string.IsNullOrEmpty(accessor))
-        //{
-        //    format.Append($"{accessor} ");
-        //}
-
         // Try add special
         var special = methodComponent.SpecialModifier;
         if (!string.IsNullOrEmpty(special) && !methodComponent.IsOverride)
@@ -106,13 +101,23 @@ internal sealed class CppLinker : Linker
             format.Append($"{special} ");
         }
 
-        // Add return type
-        var returnType = TryConvertTypeToCpp(methodComponent.Type);
-        format.Append($"{returnType} ");
+        // Try get return type
+        if (!methodComponent.IsConstructor)
+        {
+            var returnType = TryConvertTypeToCpp(methodComponent.Type);
+            format.Append($"{returnType} ");
+        }
 
         // Add name
         var name = methodComponent.Name;
-        format.Append(ConvertMethodNameToCpp(name));
+        if (methodComponent.IsConstructor)
+        {
+            format.Append(name);
+        }
+        else
+        {
+            format.Append(ConvertMethodNameToCpp(name));
+        }
 
         // Try add parameters
         var hasParameters = methodComponent.HasParameters;
@@ -122,7 +127,7 @@ internal sealed class CppLinker : Linker
             // Format each parameter
             foreach (var (argName, argType) in methodComponent.Parameters)
             {
-                format.Append($"{TryConvertTypeToCpp(argType)} {argName}, ");
+                format.Append($"const {TryConvertTypeToCpp(argType)}& {argName}, ");
             }
 
             // Trim end
@@ -262,43 +267,51 @@ internal sealed class CppLinker : Linker
 
     protected override void ConstructMethods(List<MethodComponent> methods)
     {
-        var publicMethods = methods.Where(x => x.AccessModifier == "public");
-        var privateMethods = methods.Where(x => x.AccessModifier == "private" || string.IsNullOrEmpty(x.AccessModifier));
-        var protectedMethods = methods.Where(x => x.AccessModifier == "protected");
+        var publicMethods = methods.Where(x => x.AccessModifier == "public").ToList();
+        var privateMethods = methods.Where(x => x.AccessModifier == "private" || string.IsNullOrEmpty(x.AccessModifier)).ToList();
+        var protectedMethods = methods.Where(x => x.AccessModifier == "protected").ToList();
 
-        // Build public methods
-        Append("public:");
-        IncrementIndent();
-        foreach (var pub in publicMethods)
+        // Try build public methods
+        if (publicMethods.Count > 0)
         {
-            // Remove accounted method
-            _parser.Components.Remove(pub);
-            BuildMethod(pub);
+            Append("public:");
+            IncrementIndent();
+            foreach (var pub in publicMethods)
+            {
+                // Remove accounted method
+                _parser.Components.Remove(pub);
+                BuildMethod(pub);
+            }
+            DecrementIndent();
         }
 
-        // Build protected methods
-        DecrementIndent();
-        Append("protected:");
-        IncrementIndent();
-        foreach (var prot in protectedMethods)
+        // Try build protected methods
+        if (protectedMethods.Count > 0)
         {
-            // Remove accounted method
-            _parser.Components.Remove(prot);
-            BuildMethod(prot);
-        }
-    
-        // Build private methods
-        DecrementIndent();
-        Append("private:");
-        IncrementIndent();
-        foreach (var priv in privateMethods)
-        {
-            // Remove accounted method
-            _parser.Components.Remove(priv);
-            BuildMethod(priv);
+            Append("protected:");
+            IncrementIndent();
+            foreach (var prot in protectedMethods)
+            {
+                // Remove accounted method
+                _parser.Components.Remove(prot);
+                BuildMethod(prot);
+            }
+            DecrementIndent();
         }
 
-        DecrementIndent();
+        // Try build private methods
+        if (privateMethods.Count > 0)
+        {
+            Append("private:");
+            IncrementIndent();
+            foreach (var priv in privateMethods)
+            {
+                // Remove accounted method
+                _parser.Components.Remove(priv);
+                BuildMethod(priv);
+            }
+            DecrementIndent();
+        }
     }
 
     protected override void ConstructFields(List<FieldComponent> fields)
@@ -338,16 +351,19 @@ internal sealed class CppLinker : Linker
         }
     
         // Try build private fields
-        Append("private:");
-        IncrementIndent();
-        foreach (var priv in privateFields)
+        if (privateFields != null && privateFields.Count > 0)
         {
-            // Remove accounted field
-            _parser.Components.Remove(priv);
-            BuildField(priv);
+            Append("private:");
+            IncrementIndent();
+            foreach (var priv in privateFields)
+            {
+                // Remove accounted field
+                _parser.Components.Remove(priv);
+                BuildField(priv);
+            }
+            Append();
+            DecrementIndent();
         }
-        Append();
-        DecrementIndent();
     }
 
     protected override void ConvertProperty(in ClassComponent classComponent)
@@ -363,13 +379,11 @@ internal sealed class CppLinker : Linker
             var fieldComponent = new FieldComponent("private", property.SpecialModifier, property.Type, $"{name}BackingField", property.Value);
             classComponent.AddField(fieldComponent);
 
-            var currentIndent = new string(' ', _indentLevel * 4);
-
             // Try create getter
             if (property.CanRead)
             {
-                var methodComponent = new MethodComponent(property.AccessModifier, property.SpecialModifier, property.Type, $"get{property.Name}");
-                methodComponent.AddToBody($"{currentIndent}return {fieldComponent.Name};");
+                var methodComponent = new MethodComponent(property.AccessModifier, property.SpecialModifier, $"const {TryConvertTypeToCpp(property.Type)}&", $"get{property.Name}");
+                methodComponent.AddToBody($"return {fieldComponent.Name};");
                 classComponent.AddMethod(methodComponent);
             }
 
@@ -380,7 +394,7 @@ internal sealed class CppLinker : Linker
 
                 var argName = "value";
                 var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new KeyValuePair<string, string>(argName, TryConvertTypeToCpp(property.Type)));
-                methodComponent.AddToBody($"{currentIndent}{fieldComponent.Name} = {argName};");
+                methodComponent.AddToBody($"{fieldComponent.Name} = {argName};");
                 classComponent.AddMethod(methodComponent);
             }
         }
@@ -467,6 +481,7 @@ internal sealed class CppLinker : Linker
         // Write formatted data
         Append(formatMethod);
         Append("{"); // Enter scope
+        IncrementIndent();
 
         // Method body
         foreach (var line in methodComponent.Body)
@@ -474,6 +489,7 @@ internal sealed class CppLinker : Linker
             Append(line);
         }
 
+        DecrementIndent();
         Append("}"); // Exit scope
         Append();
     }
@@ -501,23 +517,24 @@ internal sealed class CppLinker : Linker
 
     private static string TryConvertTypeToCpp(string type)
     {
-        // TO-DO: Convert array types
+        // Convert array types
         var span = type.AsSpan();
         var typeName = type;
         var suffix = string.Empty;
-        var tryArrayIndex = type.Index('[');
+        var tryArrayIndex = type.IndexOf('[');
         if (tryArrayIndex != -1)
         {
-            span = span[..tryArrayIndex];
+            typeName = span[..tryArrayIndex].ToString();
+            suffix = _arrayConversion;
         }
 
         // Convert type name
-        if (_commonTypeConversions.TryGetValue(type, out var javaType))
+        if (_commonTypeConversions.TryGetValue(typeName, out var cppType))
         {
-            return $"{type}";
+            return $"{cppType}{suffix}";
         }
 
-        return $"{type}";
+        return $"{typeName}{suffix}";
     }
 
     private static string ConvertMethodNameToCpp(string name)

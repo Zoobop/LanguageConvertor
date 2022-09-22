@@ -9,14 +9,24 @@ public class FromCSharp extends Base implements IInterface
     private String stringPropertyBackingField;
     private int intPropertyBackingField;
     
+    public FromCSharp()
+    {
+        StringProperty = "NULL";
+        IntProperty = 0;
+    }
+    
+    public FromCSharp(String str, int integer)
+    {
+        StringProperty = str;
+        IntProperty = integer;
+    }
+    
     public void method()
     {
-        
     }
     
     public void func3(Object obj)
     {
-        
     }
     
     public String getStringProperty()
@@ -29,31 +39,23 @@ public class FromCSharp extends Base implements IInterface
         return intPropertyBackingField;
     }
     
-    private static int add(int[] numbers,int count)
+    private static int add(int[] numbers, int count)
     {
-        var sum = 0;
-        for (var i = 0; i < count; i++)
-        {
-            sum += numbers[i];
-        }
-        return sum;
+        return 0;
     }
     
     void explode(boolean sure)
     {
-        
     }
     
     @Override
     protected void func1(int obj)
     {
-        
     }
     
     @Override
     protected void func2(String obj)
     {
-        
     }
     
     protected void setStringProperty(String value)

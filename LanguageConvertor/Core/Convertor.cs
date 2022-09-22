@@ -23,6 +23,7 @@ public sealed class Convertor
 
         Linker = language switch
         {
+            ConvertibleLanguage.Python => new PythonLinker(_fileData),
             ConvertibleLanguage.Cpp => new CppLinker(_fileData),
             _ => new JavaLinker(_fileData)
         };
@@ -36,6 +37,7 @@ public sealed class Convertor
 
         Linker = language switch
         {
+            ConvertibleLanguage.Python => new PythonLinker(_fileData),
             ConvertibleLanguage.Cpp => new CppLinker(_fileData),
             _ => new JavaLinker(_fileData)
         };
@@ -59,6 +61,7 @@ public sealed class Convertor
         var fileName = span[startIndex..endIndex].ToString();
         var extension = _language switch
         {
+            ConvertibleLanguage.Python => ".py",
             ConvertibleLanguage.Cpp => ".hpp",
             _ => ".java"
         };

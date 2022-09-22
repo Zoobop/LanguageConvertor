@@ -5,7 +5,7 @@ using System.Linq;
 
 //const string fieldData = "public static int Number = 0;";
 //const string propertyData = "public static int Number { get; private set; } = 0;";
-//const string methodData = "public virtual float Deg2Rad(float deg)";
+//const string methodData = "public Class(int argc, char[][] argv)";
 //const string classData = "public abstract class Test1 : BaseClass";
 //const string containerData = "namespace Container;";
 
@@ -18,8 +18,8 @@ using System.Linq;
 const string Path = @"C:\dev\LanguageConvertor\LanguageConvertor\Tests\";
 //var lines = File.ReadAllLines($@"{Path}Input\Input.cs");
 
-Convertor convertor = new Convertor($@"{Path}Input\FromCSharp.cs", ConvertibleLanguage.Cpp);
-convertor.ToFile($@"{Path}\Output\Cpp");
+Convertor convertor = new Convertor($@"{Path}Input\FromCSharp.cs", ConvertibleLanguage.Python);
+convertor.ToFile($@"{Path}\Output\Python");
 
 //JavaLinker javaLinker = new JavaLinker(lines);
 //var data = javaLinker.BuildFileLines();

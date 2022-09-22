@@ -21,6 +21,8 @@ internal sealed class MethodComponent : IComponent
     public bool IsProtected { get => AccessModifier == "protected"; }
     public bool IsAbstract { get => SpecialModifier == "abstract"; }
     public bool IsOverride { get => SpecialModifier == "override"; }
+    public bool IsConstructor { get => string.IsNullOrEmpty(Type); }
+    public bool IsVoid { get => Type == "void"; }
     public bool HasParameters { get => Parameters != null && Parameters.Count > 0; }
 
     public MethodComponent(string? accessModifier, string? specialModifier, string type, string name, Dictionary<string, string> parameters)
@@ -86,18 +88,37 @@ internal sealed class MethodComponent : IComponent
             //Console.WriteLine($"[{special}]");
             span = span[length..];
         }
-        
-        // Get type
-        var typeIndex = span.IndexOf(' ');
-        var type = span[..typeIndex++].ToString();
-        //Console.WriteLine($"[{type}]");
-        span = span[typeIndex..];
 
-        // Get name
-        var nameIndex = span.IndexOf('(');
-        var name = span[..nameIndex].ToString();
-        //Console.WriteLine($"[{name}]");
-        span = span[nameIndex..];
+        // Prep type and name
+        var type = string.Empty;
+        var name = string.Empty;
+
+        // Try get constructor
+        var tryConstructorIndex = span.IndexOf(' ');
+        var nextIndex = (tryConstructorIndex != -1) ? tryConstructorIndex : span.IndexOf('(');
+        var tryConstructor = span[..(nextIndex + 1)];
+        if (tryConstructor.Contains('('))
+        {
+            // Constructor
+            var constructorIndex = span.IndexOf('(');
+            name = span[..constructorIndex].ToString();
+            // type = name;
+
+            span = span[constructorIndex..];
+        }
+        else
+        {
+            // Normal method
+            // Get type
+            var typeIndex = span.IndexOf(' ');
+            type = span[..typeIndex++].ToString();
+            span = span[typeIndex..];
+
+            // Get name
+            var nameIndex = span.IndexOf('(');
+            name = span[..nameIndex++].ToString();
+            span = span[nameIndex..];
+        }
 
         // Try get params
         var startParenthIndex = span.IndexOf('(');

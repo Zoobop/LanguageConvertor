@@ -7,51 +7,58 @@ namespace Output
     class FromCSharp : public Base, public IInterface
     {
         public:
+            FromCSharp()
+            {
+                StringProperty = "NULL";
+                IntProperty = 0;
+            }
+            
+            FromCSharp(const std::string& str, const int32_t& integer)
+            {
+                StringProperty = str;
+                IntProperty = integer;
+            }
+            
             void method()
             {
-                
             }
             
-            void func3(uint32_t obj)
+            void func3(const uint32_t& obj)
             {
-                
             }
             
-            std::string getStringProperty()
+            const std::string& getStringProperty()
             {
-                    return stringPropertyBackingField;
+                return stringPropertyBackingField;
             }
             
-            int32_t getIntProperty()
+            const int32_t& getIntProperty()
             {
-                    return intPropertyBackingField;
+                return intPropertyBackingField;
             }
             
         protected:
-            void func1(int32_t obj) override
+            void func1(const int32_t& obj) override
             {
-                
             }
             
-            void func2(std::string obj) override
+            void func2(const std::string& obj) override
             {
-                
             }
             
-            void setStringProperty(std::string value)
+            void setStringProperty(const std::string& value)
             {
-                    stringPropertyBackingField = value;
+                stringPropertyBackingField = value;
             }
             
         private:
-            static int32_t add(int[] numbers, int32_t count)
+            static int32_t add(const int32_t*& numbers, const int32_t& count)
             {
                 return 0;
             }
             
-            void explode(bool sure)
+            void explode(const bool& sure)
             {
-                
             }
             
         public:

@@ -20,7 +20,6 @@ internal sealed class JavaLinker : Linker
 
     public JavaLinker(string[] data) : base(data)
     {
-        
     }
 
     protected override ConvertibleLanguage GetLanguage()
@@ -121,13 +120,23 @@ internal sealed class JavaLinker : Linker
             format.Append($"{special} ");
         }
 
-        // Add return type
-        var returnType = TryConvertTypeToJava(methodComponent.Type);
-        format.Append($"{returnType} ");
+        // Try get return type
+        if (!methodComponent.IsConstructor)
+        {
+            var returnType = TryConvertTypeToJava(methodComponent.Type);
+            format.Append($"{returnType} ");
+        }
 
         // Add name
         var name = methodComponent.Name;
-        format.Append(ConvertMethodNameToJava(name));
+        if (methodComponent.IsConstructor)
+        {
+            format.Append(name);
+        }
+        else
+        {
+            format.Append(ConvertMethodNameToJava(name));
+        }
 
         // Try add parameters
         var hasParameters = methodComponent.HasParameters;
@@ -197,7 +206,7 @@ internal sealed class JavaLinker : Linker
             format.Append("set; ");
         }
 
-        format.Append("}");
+        format.Append('}');
 
         // Try get value
         var value = propertyComponent.Value;
@@ -332,13 +341,11 @@ internal sealed class JavaLinker : Linker
             var fieldComponent = new FieldComponent("private", property.SpecialModifier, property.Type, $"{name}BackingField", property.Value);
             classComponent.AddField(fieldComponent);
 
-            var currentIndent = new string(' ', _indentLevel * 4);
-
             // Try create getter
             if (property.CanRead)
             {
                 var methodComponent = new MethodComponent(property.AccessModifier, property.SpecialModifier, property.Type, $"get{property.Name}");
-                methodComponent.AddToBody($"{currentIndent}return {fieldComponent.Name};");
+                methodComponent.AddToBody($"return {fieldComponent.Name};");
                 classComponent.AddMethod(methodComponent);
             }
 
@@ -349,7 +356,7 @@ internal sealed class JavaLinker : Linker
 
                 var argName = "value";
                 var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new KeyValuePair<string, string>(argName, TryConvertTypeToJava(property.Type)));
-                methodComponent.AddToBody($"{currentIndent}{fieldComponent.Name} = {argName};");
+                methodComponent.AddToBody($"{fieldComponent.Name} = {argName};");
                 classComponent.AddMethod(methodComponent);
             }
         }
@@ -357,7 +364,7 @@ internal sealed class JavaLinker : Linker
 
     #endregion
 
-    #region FileBuilding
+    #region Building
 
     public override IEnumerable<string> BuildFileLines()
     {
@@ -431,6 +438,7 @@ internal sealed class JavaLinker : Linker
         // Write formatted data
         Append(formatMethod);
         Append("{"); // Enter scope
+        IncrementIndent();
 
         // Method body
         foreach (var line in methodComponent.Body)
@@ -438,6 +446,7 @@ internal sealed class JavaLinker : Linker
             Append(line);
         }
 
+        DecrementIndent();
         Append("}"); // Exit scope
         Append();
     }
