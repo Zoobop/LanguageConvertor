@@ -69,6 +69,6 @@ namespace Output
             std::string stringPropertyBackingField;
             int32_t intPropertyBackingField;
             
-    }
+    };
     
 }

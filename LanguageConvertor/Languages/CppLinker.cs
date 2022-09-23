@@ -260,7 +260,7 @@ internal sealed class CppLinker : Linker
             ConstructFields(classComponent.Fields);
 
             DecrementIndent();
-            Append("}");
+            Append("};");
             Append();
         }
     }
