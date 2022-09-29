@@ -1,367 +1,566 @@
-﻿using LanguageConvertor.Languages;
-using LanguageConvertor.Modifiers;
+﻿using LanguageConvertor.Components;
 
 namespace LanguageConvertor.Core;
 
-public class Parser
+internal sealed class Parser
 {
-    private readonly IEnumerable<string> _data;
+    private sealed class ComponentPack
+    {
+        public IComponent Component { get; }
+        public ComponentType Type { get; }
 
-    public Parser(IEnumerable<string> data)
-    {
-        _data = data;
-    }
-    
-    public List<string> GetImports()
-    {
-        return (from line in _data where IsImport(line) select line.Substring(6, line.Length - 7)).ToList();
-    }
+        public ComponentPack(in IComponent component, ComponentType type)
+        {
+            Component = component;
+            Type = type;
+        }
 
-    public ContainerSettings GetContainer(ConvertibleLanguage language)
-    {
-        var fileScoped = language switch
+        public override string ToString()
         {
-            ConvertibleLanguage.Cpp or 
-                ConvertibleLanguage.Python => false,
-            _ => true
-        };
-        
-        var containerName = "";
-        foreach (var line in _data)
-        {
-            if (!IsContainer(line)) continue;
-            containerName = line.Remove(0, 10).TrimEnd(';');
-            break;
+            return Component.Name;
         }
-        return new(containerName, fileScoped);
-    }
-    
-    public Dictionary<string, ClassModifiers> GetClassModifiers()
-    {
-        var classes = new Dictionary<string, ClassModifiers>();
-        foreach (var line in _data)
-        {
-            if (!IsClass(line)) continue;
-            var (name, modifiers) = ParseClassModifiers(line);
-            classes.Add(name, modifiers);
-        }
-        return classes;
-    }
-    
-    public Dictionary<string, MethodModifiers> GetMethodModifiers()
-    {
-        var methods = new Dictionary<string, MethodModifiers>();
-        for (var i = 0; i < _data.Count(); i++)
-        {
-            var line = _data.ElementAt(i);
-            if (!IsMethod(line)) continue;
-            var (name, modifiers) = ParseMethodModifiers(line, i);
-            methods.Add(name, modifiers);
-        }
-        
-        return methods;
-    }
-    
-    public Dictionary<string, MemberModifiers> GetMemberModifiers()
-    {
-        var members = new Dictionary<string, MemberModifiers>();
-        foreach (var line in _data)
-        {
-            if (!IsMember(line)) continue;
-            var (name, modifiers) = ParseMemberModifiers(line);
-            members.Add(name, modifiers);
-        }
-        
-        return members;
     }
 
-    public static bool IsImport(string line)
+    public FilePack FilePack { get; } = new FilePack();
+
+    private Stack<ComponentPack> _scopeStack { get; } = new Stack<ComponentPack>();
+
+    public Parser(in string[] data)
+    {
+        Parse(data);
+    }
+
+    private void Parse(in string[] data)
+    {
+        // Begin parse
+        var count = data.Length;
+        for (var i = 0; i < count; i++)
+        {
+            var line = data[i];
+
+            // Invalid line
+            if (IsEmpty(line) || IsBeginScope(line)) continue;
+
+            // IMPORTS
+            if (IsImport(line))
+            {
+                var import = ParseImportStatement(line);
+                FilePack.AddImport(import);
+            }
+            // CONTAINERS
+            else if (IsContainer(line))
+            {
+                var container = ParseContainer(line);
+
+                FilePack.AddContainer(container);
+                Feed(container, ComponentType.Container, true);
+            }
+            // CLASSES
+            else if (IsClass(line))
+            {
+                var @class = ParseClass(line);
+
+                FilePack.AddClass(@class);
+                Feed(@class, ComponentType.Class, true);
+            }
+            // METHODS
+            else if (IsMethod(line))
+            {
+                var method = ParseMethod(line);
+
+                // Get method body if applicable
+                if (!method.IsAbstract)
+                {
+                    var methodBody = GetMethodBody(data, ref i);
+                    method.AddToBody(methodBody);
+                }
+
+                FilePack.AddMethod(method);
+                Feed(method, ComponentType.Method, true);
+            }
+            // END SCOPE
+            else if (IsEndScope(line))
+            {
+                _scopeStack.Pop();
+            }
+            // FIELDS
+            else if (IsField(line))
+            {
+                var field = ParseField(line);
+
+                FilePack.AddField(field);
+                Feed(field, ComponentType.Field);
+            }
+            // PROPERTIES
+            else if (IsProperty(line))
+            {
+                var property = ParseProperty(line);
+
+                FilePack.AddProperty(property);
+                Feed(property, ComponentType.Property);
+            }
+
+            Console.WriteLine($"[{string.Join(':', _scopeStack)}]");
+        }
+    }
+
+    #region Rules
+
+    private static bool IsEmpty(in string line)
+    {
+        return string.IsNullOrEmpty(line) || string.IsNullOrWhiteSpace(line);
+    }
+
+    private static bool IsBeginScope(in string line)
+    {
+        var trimmed = line.Trim(' ', '\t');
+        return trimmed.StartsWith('{');// || trimmed.StartsWith('{');
+    }
+
+    private static bool IsEndScope(in string line)
+    {
+        var trimmed = line.Trim(' ', '\t');
+        return trimmed.StartsWith('}');// || trimmed.StartsWith('{');
+    }
+
+    private static bool IsImport(in string line)
     {
         return line.StartsWith("using");
     }
-    public static bool IsContainer(string line)
+    private static bool IsContainer(in string line)
     {
         return line.StartsWith("namespace");
     }
-    public static bool IsClass(string line)
+    private static bool IsClass(in string line)
     {
         return line.Contains("class");
     }
-    public static bool IsMethod(string line)
+    private static bool IsMethod(in string line)
     {
-        return line.Contains('(');
+        return line.Contains('(') && !line.Contains('{');
     }
-    public static bool IsMember(string line)
+    public static bool IsField(in string line)
     {
-        var split = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return !line.Contains('{');
+    }
 
-        if (split.Length <= 0) return false;
-        var hasAccess = CheckAccessModifier(split.First());
-        return !IsContainer(line) && !IsClass(line) && !IsMethod(line) && hasAccess;
-    }
-    public static bool IsScope(string line, bool begin)
+    public static bool IsProperty(in string line)
     {
-        var text = line.TrimStart(' ');
-        return begin ? text.StartsWith('{') : text.StartsWith('}');
+        return line.Contains("{ get;") || line.Contains("set; }");
     }
+
+    #endregion
     
-    private (string, ClassModifiers) ParseClassModifiers(string line)
+    #region ParseComponents
+
+    private ImportComponent ParseImportStatement(in string line)
     {
-        var trimmedLine = line.TrimStart(' ');
-        var index = trimmedLine.IndexOf(':');
-        if (index > 0)
-        {
-            index = trimmedLine[..index].Count(x => x is ' ') + 2;
-        }
-        
-        var split = index > 0 ? trimmedLine.Split(' ', index) : trimmedLine.Split(' ');
-        
-        var access = string.Empty;
-        var special = string.Empty;
-        var inheritance = new List<string>();
-        var name = string.Empty;
+        var span = line.AsSpan();
+        span = span.Trim().TrimEnd(';');
 
-        switch (split.Length)
-        {
-            // (accessor/special) class (name)
-            case 3:
-            {
-                if (CheckAccessModifier(split.First()))
-                {
-                    access = split[0];
-                }
-                else if (CheckClassSpecialModifier(split.First()))
-                {
-                    special = split[0];
-                }
+        // Get import name
+        var importIndex = span.IndexOf(' ');
+        var importName = span[++importIndex..].ToString();
 
-                name = split.Last();
-                break;
-            }
-            // (accessor) (special) class (name) or class (name) : (inheritance)
-            case 4:
-            {
-                if (line.Contains(':'))
-                {
-                    name = split[1];
-                    inheritance.AddRange(split[3].Replace(" ", "").Split(','));
-                    break;
-                }
-
-                access = split[0];
-                special = split[1];
-                name = split.Last();
-                break;
-            }
-            // (accessor) (special) class (name) : (inheritance)
-            case 6:
-                access = split[0];
-                special = split[1];
-                name = split[3];
-                inheritance.AddRange(split[5].Replace(" ", "").Split(','));
-                break;
-            // (accessor/special) class (name) : (inheritance)
-            case 5:
-            {
-                if (CheckAccessModifier(split.First()))
-                {
-                    access = split[0];
-                }
-                else if (CheckClassSpecialModifier(split.First()))
-                {
-                    special = split[0];
-                }
-            
-                name = split[2];
-                inheritance.AddRange(split[4].Replace(" ", "").Split(','));
-                break;
-            }
-        }
-
-        return (name, new(access, special, inheritance));
+        return new ImportComponent(importName, false);
     }
-    private (string, MethodModifiers) ParseMethodModifiers(string line, int startIndex)
+
+    private ContainerComponent ParseContainer(in string line)
     {
-        var trimmedLine = line.TrimStart(' ');
-        var index = trimmedLine.IndexOf('(');
-        if (index > 0)
-        {
-            index = trimmedLine[..index].Count(x => x is ' ') + 1;
-        }
-        
-        var split = trimmedLine.Split(' ', index, StringSplitOptions.RemoveEmptyEntries);
+        var span = line.AsSpan();
+        span = span.Trim();
 
-        var access = string.Empty;
-        var special = string.Empty;
         var name = string.Empty;
-        var args = string.Empty;
-        var type = string.Empty;
-        var contents = new List<string>();
-        var overrideBool = split.Contains("override");
+        var isFileScoped = false;
 
-        switch (split.Length)
+        // Skip 'namespace' keyword
+        var namespaceIndex = span.IndexOf(' ');
+        span = span[++namespaceIndex..];
+
+        // Get name
+        var tryNameIndex = span.IndexOf(';');
+        if (tryNameIndex == -1)
         {
-            // (accessor/special) (type) (name/args)
-            case 3:
-            {
-                if (CheckAccessModifier(split.First()))
-                {
-                    access = split.First();
-                }
-                else if (CheckSpecialModifier(split.First()))
-                {
-                    special = split.First();
-                }
-            
-                var nameArgs = split.Last();
-                var argsIndex = nameArgs.IndexOf('(');
-                name = nameArgs.Substring(0, argsIndex);
-                args = nameArgs.Substring(argsIndex);
-                type = split[^2];
-                break;
-            }
-            // (accessor) (special) (type) (name/args)
-            case 4:
-            {
-                access = split[0];
-                special = split[1];
-            
-                var nameArgs = split.Last();
-                var argsIndex = nameArgs.IndexOf('(');
-                name = nameArgs.Substring(0, argsIndex);
-                args = nameArgs.Substring(argsIndex);
-                type = split[^2];
-                break;
-            }
-            // (accessor/special) (type/args) - Constructor
-            case 2:
-            {
-                if (CheckAccessModifier(split.First()))
-                {
-                    access = split.First();
-                }
-                else if (CheckSpecialModifier(split.First()))
-                {
-                    special = split.First();
-                }
-
-                name = split.Last();
-                break;
-            }
-            // (type/args) - Constructor
-            case 1:
-                name = split.First();
-                break;
+            name = span.ToString();
         }
-        
-        // Get contents
-        if (!line.EndsWith(';'))
+        else
         {
-            var content = _data.ElementAt(startIndex + 2);
-            var contentIndex = startIndex + 2;
-            while (content.TrimStart(' ') is not "}")
-            {
-                contents.Add(_data.ElementAt(contentIndex++).TrimStart(' '));
-                content = _data.ElementAt(contentIndex);
-            }
+            name = span[..^1].ToString();
+            isFileScoped = true;
         }
 
-        return (name, new(overrideBool, access, special, type, args, contents));
+        return new ContainerComponent(name, isFileScoped);
     }
-    private (string, MemberModifiers) ParseMemberModifiers(string line)
-    {
-        var trimmedLine = line.TrimStart(' ');
-        var index = trimmedLine.IndexOf('=');
-        if (index > 0)
-        {
-            index = trimmedLine.Substring(0, index).Count(x => x is ' ') + 2;
-        }
 
-        var split = (index > 0) ? trimmedLine.Split(' ', index).ToList() : trimmedLine.Split(' ').ToList();
-        
-        var access = string.Empty;
+    private ClassComponent ParseClass(in string line)
+    {
+        var span = line.AsSpan();
+        span = span.Trim();
+
+        var accessor = string.Empty;
         var special = string.Empty;
         var name = string.Empty;
-        var type = string.Empty;
+        var parent = string.Empty;
+        var interfaces = new List<string>();
+
+        // Try get accessor
+        var hasAccess = span.StartsWith("public") || span.StartsWith("private") || span.StartsWith("protected");
+        if (hasAccess)
+        {
+            var length = span.IndexOf(' ');
+            accessor = span[..length++].ToString();
+            //Console.WriteLine($"[{accessor}]");
+            span = span[length..];
+        }
+        
+        // Try get special
+        var hasSpecial = span.StartsWith("static") || span.StartsWith("sealed") || span.StartsWith("abstract");
+        if (hasSpecial)
+        {
+            var length = span.IndexOf(' ');
+            special = span[..length++].ToString();
+            //Console.WriteLine($"[{special}]");
+            span = span[length..];
+        }
+
+        // Skip 'class' keyword
+        var classIndex = span.IndexOf(' ');
+        span = span[++classIndex..];
+
+        // Get name
+        var tryNameIndex = span.IndexOf(' ');
+        if (tryNameIndex == -1)
+        {
+            name = span.ToString();
+        }
+        else
+        {
+            name = span[..tryNameIndex++].ToString();
+            //Console.WriteLine($"[{name}]");
+            span = span[tryNameIndex..];
+        }
+
+        // Try get parents
+        var baseIndex = span.IndexOf(':');
+        if (baseIndex != -1)
+        {
+            var startIndex = baseIndex + 2;
+            span = span[startIndex..].Trim();
+
+            var hasParents = true;
+            while (hasParents)
+            {
+                // Get parent
+                var tryParentIndex = span.IndexOf(',');
+                var currentParent = string.Empty;
+                if (tryParentIndex == -1)
+                {
+                    // Last one
+                    currentParent = span.ToString();
+                }
+                else
+                {
+                    currentParent = span[..tryParentIndex++].ToString();
+                    span = span[++tryParentIndex..];
+                }
+
+                // Interface check
+                if (currentParent.StartsWith('I'))
+                {
+                    // Interface
+                    interfaces.Add(currentParent);
+                }
+                else
+                {
+                    // Class
+                    parent = currentParent;
+                }
+
+                // Break
+                if (tryParentIndex == -1) hasParents = false;
+            }
+        }
+
+        return new ClassComponent(accessor, special, name, parent, interfaces);
+    }
+
+    private FieldComponent ParseField(in string line)
+    {
+        var span = line.AsSpan();
+        span = span.Trim();
+
+        var accessor = string.Empty;
+        var special = string.Empty;
         var value = string.Empty;
 
-        switch (split.Count)
+        // Try get accessor
+        var hasAccess = span.StartsWith("public") || span.StartsWith("private") || span.StartsWith("protected");
+        if (hasAccess)
         {
-            // (accessor/special) (type) (name) = (value)
-            case 5:
-            {
-                if (CheckAccessModifier(split.First()))
-                {
-                    access = split.First();
-                }
-                else if (CheckSpecialModifier(split.First()))
-                {
-                    special = split.First();
-                }
-
-                type = split[1];
-                name = split[2];
-                value = split[4];
-                break;
-            }
-            // (accessor) (special) (type) (name) = (value)
-            case 6:
-                access = split[0];
-                special = split[1];
-                type = split[2];
-                name = split[3];
-                value = split[5];
-                break;
-            // (type) (name) = (value) or (accessor) (special) (type) (name)
-            case 4:
-                if (line.Contains('='))
-                {
-                    type = split[0];
-                    name = split[1];
-                    value = split[3];
-                    break;
-                }
-
-                access = split[0];
-                special = split[1];
-                type = split[2];
-                name = split[3];
-                break;
-            // (accessor/special) (type) (name)
-            case 3:
-                if (CheckAccessModifier(split.First()))
-                {
-                    access = split[0];
-                }
-                else if (CheckSpecialModifier(split.First()))
-                {
-                    special = split[0];
-                }
-                
-                type = split[1];
-                name = split[2];
-                break;
-            case 2:
-                type = split[0];
-                name = split[1];
-                break;
+            var length = span.IndexOf(' ');
+            accessor = span[..length++].ToString();
+            //Console.WriteLine($"[{accessor}]");
+            span = span[length..];
         }
 
-        return (name.TrimEnd(';'), new(access, special, type, value.TrimEnd(';')));
+        // Try get special
+        var hasSpecial = span.StartsWith("static") || span.StartsWith("const");
+        if (hasSpecial)
+        {
+            var length = span.IndexOf(' ');
+            special = span[..length++].ToString();
+            //Console.WriteLine($"[{special}]");
+            span = span[length..];
+        }
+
+        // Get type
+        var typeIndex = span.IndexOf(' ');
+        var type = span[..typeIndex++].ToString();
+        //Console.WriteLine($"[{type}]");
+        span = span[typeIndex..];
+
+        // Get name
+        var tryIndex = span.IndexOf(' ');
+        var nameIndex = (tryIndex == -1) ? span.IndexOf(';') : tryIndex;
+        var name = span[..nameIndex++].ToString();
+        //Console.WriteLine($"[{name}]");
+        span = span[nameIndex..];
+
+        // Try get value
+        var valueIndex = span.IndexOf('=');
+        if (valueIndex != -1)
+        {
+            var index = valueIndex + 2; ;
+            value = span[index..^1].TrimEnd(';').ToString();
+            //Console.WriteLine($"[{value}]");
+        }
+
+        return new FieldComponent(accessor, special, type, name, value);
     }
 
-    private static bool CheckAccessModifier(string text)
+    private PropertyComponent ParseProperty(in string line)
     {
-        return text is "private" or "protected" or "public";
+        var span = line.AsSpan();
+        span = span.Trim();
+
+        var accessor = string.Empty;
+        var special = string.Empty;
+        var canRead = false;
+        var canWrite = false;
+        var writeAccessModifier = string.Empty;
+        var value = string.Empty;
+
+        // Try get accessor
+        var hasAccess = span.StartsWith("public") || span.StartsWith("private") || span.StartsWith("protected");
+        if (hasAccess)
+        {
+            var length = span.IndexOf(' ');
+            accessor = span[..length++].ToString();
+            //Console.WriteLine($"[{accessor}]");
+            span = span[length..];
+        }
+
+        // Try get special
+        var hasSpecial = span.StartsWith("static") || span.StartsWith("const");
+        if (hasSpecial)
+        {
+            var length = span.IndexOf(' ');
+            special = span[..length++].ToString();
+            //Console.WriteLine($"[{special}]");
+            span = span[length..];
+        }
+
+        // Get type
+        var typeIndex = span.IndexOf(' ');
+        var type = span[..typeIndex++].ToString();
+        //Console.WriteLine($"[{type}]");
+        span = span[typeIndex..];
+
+        // Get name
+        var tryIndex = span.IndexOf(' ');
+        var nameIndex = (tryIndex == -1) ? span.IndexOf(';') : tryIndex;
+        var name = span[..nameIndex++].ToString();
+        //Console.WriteLine($"[{name}]");
+        span = span[nameIndex..];
+
+        // Try get getter
+        var getterIndex = span.IndexOf('g');
+        if (getterIndex != -1)
+        {
+            canRead = true;
+            var nextIndex = getterIndex + 5;
+            span = span[nextIndex..];
+            //Console.WriteLine($"[{canRead}]");
+        }
+
+        // Try get write accessor
+        var hasWriteAccess = span.StartsWith("public") || span.StartsWith("private") || span.StartsWith("protected");
+        if (hasWriteAccess)
+        {
+            var length = span.IndexOf(' ');
+            writeAccessModifier = span[..length++].ToString();
+            //Console.WriteLine($"[{writeAccessModifier}]");
+            span = span[length..];
+        }
+
+        // Try get setter
+        var setterIndex = span.IndexOf('s');
+        if (setterIndex != -1)
+        {
+            canWrite = true;
+            //Console.WriteLine($"[{canWrite}]");
+        }
+
+        // Try get value
+        var valueIndex = span.IndexOf('=');
+        if (valueIndex != -1)
+        {
+            var index = valueIndex + 2; ;
+            value = span[index..^1].TrimEnd(';').ToString();
+            //Console.WriteLine($"[{value}]");
+        }
+
+        return new PropertyComponent(accessor, special, type, name, value, canRead, canWrite, writeAccessModifier);
     }
 
-    private static bool CheckSpecialModifier(string text)
+    private MethodComponent ParseMethod(in string line)
     {
-        return text is "abstract" or "override" or "virtual";
+        var span = line.AsSpan();
+        span = span.Trim();
+
+        var accessor = string.Empty;
+        var special = string.Empty;
+        var parameters = new Dictionary<string, string>();
+
+        // Try get accessor
+        var hasAccess = span.StartsWith("public") || span.StartsWith("private") || span.StartsWith("protected");
+        if (hasAccess)
+        {
+            var length = span.IndexOf(' ');
+            accessor = span[..length++].ToString();
+            //Console.WriteLine($"[{accessor}]");
+            span = span[length..];
+        }
+        
+        // Try get special
+        var hasSpecial = span.StartsWith("static") || span.StartsWith("override") || span.StartsWith("virtual");
+        if (hasSpecial)
+        {
+            var length = span.IndexOf(' ');
+            special = span[..length++].ToString();
+            //Console.WriteLine($"[{special}]");
+            span = span[length..];
+        }
+
+        // Prep type and name
+        var type = string.Empty;
+        var name = string.Empty;
+
+        // Try get constructor
+        var tryConstructorIndex = span.IndexOf(' ');
+        var nextIndex = (tryConstructorIndex != -1) ? tryConstructorIndex : span.IndexOf('(');
+        var tryConstructor = span[..(nextIndex + 1)];
+        if (tryConstructor.Contains('('))
+        {
+            // Constructor
+            var constructorIndex = span.IndexOf('(');
+            name = span[..constructorIndex].ToString();
+            // type = name;
+
+            span = span[constructorIndex..];
+        }
+        else
+        {
+            // Normal method
+            // Get type
+            var typeIndex = span.IndexOf(' ');
+            type = span[..typeIndex++].ToString();
+            span = span[typeIndex..];
+
+            // Get name
+            var nameIndex = span.IndexOf('(');
+            name = span[..nameIndex++].ToString();
+            span = span[nameIndex..];
+        }
+
+        // Try get params
+        var startParenthIndex = span.IndexOf('(');
+        var endParenthIndex = span.IndexOf(')');
+        if (endParenthIndex - startParenthIndex > 1)
+        {
+            span = span.TrimStart('(');
+            var hasArgs = true;
+            while (hasArgs)
+            {
+                // Get arg type
+                var argTypeIndex = span.IndexOf(' ');
+                var argType = span[..argTypeIndex++].ToString();
+                span = span[argTypeIndex..];
+
+                // Get arg name
+                var tryArgIndex = span.IndexOf(',');
+                var argNameIndex = (tryArgIndex == -1) ? span.IndexOf(')') : tryArgIndex;
+                var argName = span[..argNameIndex++].ToString();
+                span = span[argNameIndex..].Trim();
+
+                //Console.WriteLine($"[{argType}:{argName}]");
+                parameters.Add(argName, argType);
+
+                // Break
+                if (tryArgIndex == -1) hasArgs = false;
+            }
+        }
+
+        return new MethodComponent(accessor, special, type, name, parameters);
     }
 
-    private static bool CheckClassSpecialModifier(string text)
+    #endregion
+
+    #region Helpers
+
+    private List<string> GetMethodBody(in string[] data, ref int index)
     {
-        return text is "abstract" or "sealed";
+        var methodBody = new List<string>();
+
+        // Advance index passed method scope initiator
+        index += 2;
+
+        var scopeCount = 1;
+        while (scopeCount > 0)
+        {
+            // Get line
+            var line = data[index++].Trim(' ', '\t');
+
+            // Update scope counter
+            if (line.Contains('}')) --scopeCount;
+            var indent = new string(' ', scopeCount * 4);
+            if (line.Contains('{')) ++scopeCount;
+
+            // Break if end all local scopes
+            if (scopeCount == 0) break;
+
+            var formattedLine = $"{indent}{line}".Trim();
+            if (!string.IsNullOrEmpty(formattedLine))
+            {
+                methodBody.Add(formattedLine);
+            }
+        }
+
+        // Rewind to method end scope to pop off scope stack
+        index -= 2;
+        return methodBody;
     }
+
+    private void Feed(in IComponent component, ComponentType type, bool isScope = false)
+    {
+        var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
+        currentScope?.Component.AddComponent(component);
+        FilePack.AddComponent(component);
+        if (isScope)
+        {
+            _scopeStack.Push(new ComponentPack(component, type));
+        }
+    }
+
+    #endregion
 }

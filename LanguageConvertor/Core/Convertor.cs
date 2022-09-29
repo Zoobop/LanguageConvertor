@@ -2,13 +2,13 @@
 
 namespace LanguageConvertor.Core;
 
-public class Convertor
+public sealed class Convertor
 {
     private readonly string _filePath;
-    private readonly IEnumerable<string> _fileData;
+    private readonly string[] _fileData;
     private readonly ConvertibleLanguage _language;
 
-    public Linker Linker { get; }
+    internal Linker Linker { get; }
 
     public Convertor(string filePath, ConvertibleLanguage language)
     {
@@ -16,18 +16,20 @@ public class Convertor
         {
             throw new FileNotFoundException("Could not find file!");
         }
+
         _filePath = filePath;
         _language = language;
         _fileData = File.ReadAllLines(filePath);
 
         Linker = language switch
         {
-            ConvertibleLanguage.Cpp => new CppSyntaxLinker(_fileData),
-            _ => new JavaSyntaxLinker(_fileData)
+            ConvertibleLanguage.Python => new PythonLinker(_fileData),
+            ConvertibleLanguage.Cpp => new CppLinker(_fileData),
+            _ => new JavaLinker(_fileData)
         };
     }
     
-    public Convertor(IEnumerable<string> data, ConvertibleLanguage language)
+    public Convertor(string[] data, ConvertibleLanguage language)
     {
         _filePath = string.Empty;
         _language = language;
@@ -35,29 +37,55 @@ public class Convertor
 
         Linker = language switch
         {
-            ConvertibleLanguage.Cpp => new CppSyntaxLinker(_fileData),
-            _ => new JavaSyntaxLinker(_fileData)
+            ConvertibleLanguage.Python => new PythonLinker(_fileData),
+            ConvertibleLanguage.Cpp => new CppLinker(_fileData),
+            _ => new JavaLinker(_fileData)
         };
     }
 
-    public IEnumerable<string> GetConvertedData()
+    public Convertor(in FilePack filePack)
     {
-        return Linker.GetFormattedFileData();
+        _filePath = string.Empty;
+        _language = filePack.Language;
+        _fileData = Array.Empty<string>();
+
+        Linker = _language switch
+        {
+            ConvertibleLanguage.Python => new PythonLinker(filePack),
+            ConvertibleLanguage.Cpp => new CppLinker(filePack),
+            _ => new JavaLinker(filePack)
+        };
     }
 
-    public void NewFile(string exportPath)
+    public IEnumerable<string> GetDataAsLines()
     {
-        var startIndex = _filePath.LastIndexOf('\\');
-        var endIndex = _filePath.LastIndexOf('.');
-        var fileName = _filePath.Substring(startIndex, endIndex - startIndex);
+        return Linker.BuildFileLines();
+    }
+
+    public string GetData()
+    {
+        return Linker.BuildFile();
+    }
+
+    public void ToFile(string exportPath)
+    {
+        var fileName = "ConvertedFile";
+        if (!string.IsNullOrEmpty(_filePath))
+        {
+            var span = _filePath.AsSpan();
+            var startIndex = span.LastIndexOf('\\');
+            var endIndex = span.LastIndexOf('.');
+            fileName = span[startIndex..endIndex].ToString();
+        }
+
         var extension = _language switch
         {
+            ConvertibleLanguage.Python => ".py",
             ConvertibleLanguage.Cpp => ".hpp",
             _ => ".java"
         };
 
-        var convertedData = GetConvertedData();
-        
+        var convertedData = GetDataAsLines();
         var completePath = $"{exportPath}{fileName}{extension}";
         File.WriteAllLines(completePath, convertedData);
     } 
