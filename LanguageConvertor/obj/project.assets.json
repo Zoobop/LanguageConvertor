@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\dev\\LanguageConvertor\\LanguageConvertor\\LanguageConvertor.csproj",
+      "projectUniqueName": "C:\\dev\\CodeGenerator\\LanguageConvertor\\LanguageConvertor\\LanguageConvertor.csproj",
       "projectName": "LanguageConvertor",
-      "projectPath": "C:\\dev\\LanguageConvertor\\LanguageConvertor\\LanguageConvertor.csproj",
+      "projectPath": "C:\\dev\\CodeGenerator\\LanguageConvertor\\LanguageConvertor\\LanguageConvertor.csproj",
       "packagesPath": "C:\\Users\\Brandon\\.nuget\\packages\\",
-      "outputPath": "C:\\dev\\LanguageConvertor\\LanguageConvertor\\obj\\",
+      "outputPath": "C:\\dev\\CodeGenerator\\LanguageConvertor\\LanguageConvertor\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Brandon\\AppData\\Roaming\\NuGet\\NuGet.Config",
