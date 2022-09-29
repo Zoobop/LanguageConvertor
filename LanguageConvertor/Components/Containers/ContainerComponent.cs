@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LanguageConvertor.Components;
 
-internal sealed class ContainerComponent : IComponent
+public sealed class ContainerComponent : IComponent
 {
     public string Name { get; set; } = string.Empty;
     public bool IsFileScoped { get; } = false;

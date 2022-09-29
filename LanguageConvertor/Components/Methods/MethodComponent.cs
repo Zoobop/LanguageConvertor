@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace LanguageConvertor.Components;
 
-internal sealed class MethodComponent : IComponent
+public sealed class MethodComponent : IComponent
 {
-    public string? AccessModifier { get; set; }
-    public string? SpecialModifier { get; set; }
-    public string Type { get; set; }
-    public string Name { get; set; }
-    public Dictionary<string, string> Parameters { get; } = new Dictionary<string, string>();
+    public string AccessModifier { get; set; } = string.Empty;
+    public string SpecialModifier { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public Dictionary<string, string> Parameters { get; init; } = new Dictionary<string, string>();
     public List<string> Body { get; set; } = new List<string>();
 
     public bool IsStatic { get => SpecialModifier == "static"; }
@@ -25,7 +25,11 @@ internal sealed class MethodComponent : IComponent
     public bool IsVoid { get => Type == "void"; }
     public bool HasParameters { get => Parameters != null && Parameters.Count > 0; }
 
-    public MethodComponent(string? accessModifier, string? specialModifier, string type, string name, Dictionary<string, string> parameters)
+    public MethodComponent()
+    {
+    }
+
+    public MethodComponent(string accessModifier, string specialModifier, string type, string name, Dictionary<string, string> parameters)
     {
         AccessModifier = accessModifier;
         SpecialModifier = specialModifier;
@@ -34,7 +38,7 @@ internal sealed class MethodComponent : IComponent
         Parameters = parameters;
     }
 
-    public MethodComponent(string? accessModifier, string? specialModifier, string type, string name, params KeyValuePair<string, string>[] argPairs)
+    public MethodComponent(string accessModifier, string specialModifier, string type, string name, params KeyValuePair<string, string>[] argPairs)
     {
         AccessModifier = accessModifier;
         SpecialModifier = specialModifier;

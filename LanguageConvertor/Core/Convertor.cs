@@ -43,6 +43,20 @@ public sealed class Convertor
         };
     }
 
+    public Convertor(in FilePack filePack)
+    {
+        _filePath = string.Empty;
+        _language = filePack.Language;
+        _fileData = Array.Empty<string>();
+
+        Linker = _language switch
+        {
+            ConvertibleLanguage.Python => new PythonLinker(filePack),
+            ConvertibleLanguage.Cpp => new CppLinker(filePack),
+            _ => new JavaLinker(filePack)
+        };
+    }
+
     public IEnumerable<string> GetDataAsLines()
     {
         return Linker.BuildFileLines();
@@ -55,10 +69,15 @@ public sealed class Convertor
 
     public void ToFile(string exportPath)
     {
-        var span = _filePath.AsSpan();
-        var startIndex = span.LastIndexOf('\\');
-        var endIndex = span.LastIndexOf('.');
-        var fileName = span[startIndex..endIndex].ToString();
+        var fileName = "ConvertedFile";
+        if (!string.IsNullOrEmpty(_filePath))
+        {
+            var span = _filePath.AsSpan();
+            var startIndex = span.LastIndexOf('\\');
+            var endIndex = span.LastIndexOf('.');
+            fileName = span[startIndex..endIndex].ToString();
+        }
+
         var extension = _language switch
         {
             ConvertibleLanguage.Python => ".py",

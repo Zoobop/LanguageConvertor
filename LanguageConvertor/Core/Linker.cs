@@ -11,16 +11,23 @@ public enum ConvertibleLanguage
 
 internal abstract class Linker
 {
-    protected readonly IEnumerable<string> _data;
-    protected readonly Parser _parser;
+    protected readonly FilePack _filePack;
     protected readonly List<string> _formattedData;
     protected int _indentLevel = 0;
-    
-    public Linker(string[] data)
+
+    protected Linker(string[] data)
     {
-        _data = data;
-        _parser = new Parser(data);
-        _formattedData = new List<string>(_parser.TotalCount);
+        var parser = new Parser(data);
+        _filePack = parser.FilePack;
+        _formattedData = new List<string>();
+        _indentLevel = 0;
+    }
+
+    protected Linker(in FilePack filePack)
+    {
+        _filePack = filePack;
+        _formattedData = new List<string>(_filePack.TotalCount);
+        _indentLevel = 0;
     }
 
     protected abstract ConvertibleLanguage GetLanguage();
@@ -44,7 +51,12 @@ internal abstract class Linker
         var indent = new string(' ', _indentLevel * 4);
         var data = $"{indent}{text}";
         _formattedData.Add(data);
-        //Console.WriteLine(data);
+    }
+    protected void Append(char character)
+    {
+        var indent = new string(' ', _indentLevel * 4);
+        var data = $"{indent}{character}";
+        _formattedData.Add(data);
     }
 
     protected void IncrementIndent() => ++_indentLevel;
@@ -53,4 +65,5 @@ internal abstract class Linker
 
     public abstract IEnumerable<string> BuildFileLines();
     public abstract string BuildFile();
+
 }

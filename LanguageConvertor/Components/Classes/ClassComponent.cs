@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace LanguageConvertor.Components;
 
-internal sealed class ClassComponent : IComponent
+public sealed class ClassComponent : IComponent
 {
-    public string? AccessModifier { get; set; }
-    public string? SpecialModifier { get; set; }
-    public string Name { get; set; }
-    public string? ParentClass { get; set; }
+    public string AccessModifier { get; set; } = string.Empty;
+    public string SpecialModifier { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string ParentClass { get; set; } = string.Empty;
     public List<string> Interfaces { get; } = new List<string>();
     public List<ClassComponent> Classes { get; } = new List<ClassComponent>();
     public List<FieldComponent> Fields { get; } = new List<FieldComponent>();
@@ -23,7 +23,11 @@ internal sealed class ClassComponent : IComponent
     public bool IsPublic { get => AccessModifier == "public"; }
     public bool IsProtected { get => AccessModifier == "protected"; }
 
-    public ClassComponent(string? accessModifier, string? specialModifier, string name, string? parentClass, List<string> interfaces)
+    public ClassComponent()
+    {
+    }
+
+    public ClassComponent(string accessModifier, string specialModifier, string name, string parentClass, List<string> interfaces)
     {
         AccessModifier = accessModifier;
         SpecialModifier = specialModifier;

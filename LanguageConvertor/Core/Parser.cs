@@ -1,5 +1,4 @@
 ﻿using LanguageConvertor.Components;
-using System.Text;
 
 namespace LanguageConvertor.Core;
 
@@ -23,14 +22,7 @@ internal sealed class Parser
         }
     }
 
-    public List<string> Imports { get; } = new List<string>();
-    public List<ContainerComponent> Containers { get; } = new List<ContainerComponent>();
-    public List<ClassComponent> Classes { get; } = new List<ClassComponent>();
-    public List<MethodComponent> Methods { get; } = new List<MethodComponent>();
-    public List<FieldComponent> Fields { get; }  = new List<FieldComponent>();
-    public List<PropertyComponent> Properties { get; } = new List<PropertyComponent>();
-    public LinkedList<IComponent> Components { get; } = new LinkedList<IComponent>();
-    public int TotalCount { get => Components.Count; }
+    public FilePack FilePack { get; } = new FilePack();
 
     private Stack<ComponentPack> _scopeStack { get; } = new Stack<ComponentPack>();
 
@@ -54,14 +46,14 @@ internal sealed class Parser
             if (IsImport(line))
             {
                 var import = ParseImportStatement(line);
-                Imports.Add(import);
+                FilePack.AddImport(import);
             }
             // CONTAINERS
             else if (IsContainer(line))
             {
                 var container = ParseContainer(line);
 
-                Containers.Add(container);
+                FilePack.AddContainer(container);
                 Feed(container, ComponentType.Container, true);
             }
             // CLASSES
@@ -69,7 +61,7 @@ internal sealed class Parser
             {
                 var @class = ParseClass(line);
 
-                Classes.Add(@class);
+                FilePack.AddClass(@class);
                 Feed(@class, ComponentType.Class, true);
             }
             // METHODS
@@ -84,7 +76,7 @@ internal sealed class Parser
                     method.AddToBody(methodBody);
                 }
 
-                Methods.Add(method);
+                FilePack.AddMethod(method);
                 Feed(method, ComponentType.Method, true);
             }
             // END SCOPE
@@ -97,7 +89,7 @@ internal sealed class Parser
             {
                 var field = ParseField(line);
 
-                Fields.Add(field);
+                FilePack.AddField(field);
                 Feed(field, ComponentType.Field);
             }
             // PROPERTIES
@@ -105,7 +97,7 @@ internal sealed class Parser
             {
                 var property = ParseProperty(line);
 
-                Properties.Add(property);
+                FilePack.AddProperty(property);
                 Feed(property, ComponentType.Property);
             }
 
@@ -564,7 +556,7 @@ internal sealed class Parser
     {
         var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
         currentScope?.Component.AddComponent(component);
-        Components.AddLast(component);
+        FilePack.AddComponent(component);
         if (isScope)
         {
             _scopeStack.Push(new ComponentPack(component, type));

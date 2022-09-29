@@ -13,9 +13,7 @@ C:\dev\CSharp\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\refint\Langua
 C:\dev\CSharp\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\LanguageConvertor.pdb
 C:\dev\CSharp\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\LanguageConvertor.genruntimeconfig.cache
 C:\dev\CSharp\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\ref\LanguageConvertor.dll
-C:\dev\LanguageConvertor\LanguageConvertor\bin\Debug\net6.0\LanguageConvertor.exe
 C:\dev\LanguageConvertor\LanguageConvertor\bin\Debug\net6.0\LanguageConvertor.deps.json
-C:\dev\LanguageConvertor\LanguageConvertor\bin\Debug\net6.0\LanguageConvertor.runtimeconfig.json
 C:\dev\LanguageConvertor\LanguageConvertor\bin\Debug\net6.0\LanguageConvertor.dll
 C:\dev\LanguageConvertor\LanguageConvertor\bin\Debug\net6.0\LanguageConvertor.pdb
 C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\LanguageConvertor.csproj.AssemblyReference.cache
@@ -25,6 +23,5 @@ C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\LanguageConvertor.As
 C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\LanguageConvertor.csproj.CoreCompileInputs.cache
 C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\LanguageConvertor.dll
 C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\LanguageConvertor.pdb
-C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\LanguageConvertor.genruntimeconfig.cache
 C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\ref\LanguageConvertor.dll
 C:\dev\LanguageConvertor\LanguageConvertor\obj\Debug\net6.0\refint\LanguageConvertor.dll

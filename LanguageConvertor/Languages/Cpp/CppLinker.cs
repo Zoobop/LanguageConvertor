@@ -1,75 +1,74 @@
 ﻿using LanguageConvertor.Components;
 using LanguageConvertor.Core;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace LanguageConvertor.Languages;
 
-internal sealed class JavaLinker : Linker
+internal sealed class CppLinker : Linker
 {
     private static readonly IDictionary<string, string> _commonTypeConversions = new Dictionary<string, string>
     {
-        {"bool", "boolean"},
-        {"byte", "byte"},
-        {"char", "char"},
-        {"short", "short"},
-        {"int", "int"},
-        {"long", "long"},
-        {"object", "Object"},
-        {"string", "String"},
+        {"bool", "bool"},
+        {"sbyte", "int8_t"},
+        {"char", "int8_t"},
+        {"short", "int16_t"},
+        {"int", "int32_t"},
+        {"long", "int64_t"},
+        {"byte", "uint8_t"},
+        {"ushort", "uint16_t"},
+        {"uint", "uint32_t"},
+        {"ulong", "uint64_t"},
+        {"object", "uint32_t"},
+        {"string", "std::string"},
     };
 
-    public JavaLinker(string[] data) : base(data)
+    private static readonly string _arrayConversion = "*";
+
+    public CppLinker(string[] data) : base(data)
+    {
+    }
+
+    public CppLinker(in FilePack filePack) : base(filePack)
     {
     }
 
     protected override ConvertibleLanguage GetLanguage()
     {
-        return ConvertibleLanguage.Java;
+        return ConvertibleLanguage.Cpp;
     }
 
     protected override string GetImportKeyword()
     {
-        return "import";
+        return "#include";
     }
 
     protected override string GetContainerKeyword()
     {
-        return "package";
+        return "namespace";
     }
 
     #region Formatting
 
     protected override string FormatImport(string importName)
     {
-        return $"{GetImportKeyword()} {importName}.Java.Example.*;";
+        return $"{GetImportKeyword()} \"Example/{importName}.hpp\"";
     }
 
     protected override string FormatContainer(in ContainerComponent containerComponent)
     {
         // Format container
-        return $"{GetContainerKeyword()} {containerComponent.Name}.Java;";
+        var formattedContainer = containerComponent.Name.Replace(".", "::");
+        return $"{GetContainerKeyword()} {formattedContainer}";
     }
 
     protected override string FormatClass(in ClassComponent classComponent)
     {
         // Format class definition
         var format = new StringBuilder();
-
-        // Try add accessor
-        var accessor = classComponent.AccessModifier;
-        if (!string.IsNullOrEmpty(accessor))
-        {
-            format.Append($"{accessor} ");
-        }
-
-        // Try add special
-        var special = classComponent.SpecialModifier;
-        if (!string.IsNullOrEmpty(special))
-        {
-            var javaSpecial = special;
-
-            format.Append($"{javaSpecial} ");
-        }
 
         // Add 'class' keyword
         format.Append("class ");
@@ -78,18 +77,21 @@ internal sealed class JavaLinker : Linker
         var name = classComponent.Name;
         format.Append(name);
 
-        // Try add parent class
+        // Try add inherited classes
         var parentClass = classComponent.ParentClass;
+        var interfaces = classComponent.Interfaces;
+        var inheritedClasses = new List<string>(interfaces.Count + 1);
+        
         if (!string.IsNullOrEmpty(parentClass))
         {
-            format.Append($" extends {parentClass}");
+            inheritedClasses.Add(parentClass);
         }
 
-        // Try add interface(s)
-        var interfaces = classComponent.Interfaces;
-        if (interfaces.Count > 0)
+        inheritedClasses.AddRange(interfaces);
+
+        if (inheritedClasses.Count > 0)
         {
-            format.Append($" implements {string.Join(", ", interfaces)}");
+            format.Append($" : public {string.Join(", public ", inheritedClasses)}");
         }
 
         return format.ToString();
@@ -100,21 +102,8 @@ internal sealed class JavaLinker : Linker
         // Format method definition
         var format = new StringBuilder();
 
-        // Try add override
+        // Try add special
         var special = methodComponent.SpecialModifier;
-        if (!string.IsNullOrEmpty(special) && methodComponent.IsOverride)
-        {
-            format.Append($"@Override\n{GetCurrentIndent()}");
-        }
-
-        // Try add accessor
-        var accessor = methodComponent.AccessModifier;
-        if (!string.IsNullOrEmpty(accessor))
-        {
-            format.Append($"{accessor} ");
-        }
-
-        // Try get special
         if (!string.IsNullOrEmpty(special) && !methodComponent.IsOverride)
         {
             format.Append($"{special} ");
@@ -123,7 +112,7 @@ internal sealed class JavaLinker : Linker
         // Try get return type
         if (!methodComponent.IsConstructor)
         {
-            var returnType = TryConvertTypeToJava(methodComponent.Type);
+            var returnType = TryConvertTypeToCpp(methodComponent.Type);
             format.Append($"{returnType} ");
         }
 
@@ -135,7 +124,7 @@ internal sealed class JavaLinker : Linker
         }
         else
         {
-            format.Append(ConvertMethodNameToJava(name));
+            format.Append(ConvertMethodNameToCpp(name));
         }
 
         // Try add parameters
@@ -146,13 +135,19 @@ internal sealed class JavaLinker : Linker
             // Format each parameter
             foreach (var (argName, argType) in methodComponent.Parameters)
             {
-                format.Append($"{TryConvertTypeToJava(argType)} {argName}, ");
+                format.Append($"const {TryConvertTypeToCpp(argType)}& {argName}, ");
             }
 
             // Trim end
             format.Remove(format.Length - 2, 2);
         }
         format.Append(')');
+
+        // Try add override
+        if (!string.IsNullOrEmpty(special) && methodComponent.IsOverride)
+        {
+            format.Append($" {special}");
+        }
 
         return format.ToString();
     }
@@ -177,7 +172,7 @@ internal sealed class JavaLinker : Linker
         }
 
         // Add type
-        var type = TryConvertTypeToJava(propertyComponent.Type);
+        var type = TryConvertTypeToCpp(propertyComponent.Type);
         format.Append($"{type} ");
 
         // Add name
@@ -206,7 +201,7 @@ internal sealed class JavaLinker : Linker
             format.Append("set; ");
         }
 
-        format.Append('}');
+        format.Append("}");
 
         // Try get value
         var value = propertyComponent.Value;
@@ -223,13 +218,6 @@ internal sealed class JavaLinker : Linker
         // Format field definition
         var format = new StringBuilder();
 
-        // Try add accessor
-        var accessor = fieldComponent.AccessModifier;
-        if (!string.IsNullOrEmpty(accessor))
-        {
-            format.Append($"{accessor} ");
-        }
-
         // Try add special
         var special = fieldComponent.SpecialModifier;
         if (!string.IsNullOrEmpty(special))
@@ -238,7 +226,7 @@ internal sealed class JavaLinker : Linker
         }
 
         // Add type
-        var type = TryConvertTypeToJava(fieldComponent.Type);
+        var type = TryConvertTypeToCpp(fieldComponent.Type);
         format.Append($"{type} ");
 
         // Add name
@@ -267,65 +255,123 @@ internal sealed class JavaLinker : Linker
         foreach (var classComponent in classes)
         {
             // Remove accounted class
-            _parser.Components.Remove(classComponent);
+            _filePack.RemoveComponent(classComponent);
             BuildClass(classComponent);
 
             // Convert properties
             ConvertProperty(classComponent);
 
-            // Build fields
-            ConstructFields(classComponent.Fields);
-
             // Build methods
             ConstructMethods(classComponent.Methods);
 
+            // Build fields
+            ConstructFields(classComponent.Fields);
+
             DecrementIndent();
-            Append("}");
+            Append("};");
             Append();
         }
     }
 
     protected override void ConstructMethods(List<MethodComponent> methods)
     {
-        var publicMethods = methods.Where(x => x.AccessModifier == "public");
-        var privateMethods = methods.Where(x => x.AccessModifier == "private" || string.IsNullOrEmpty(x.AccessModifier));
-        var protectedMethods = methods.Where(x => x.AccessModifier == "protected");
+        var publicMethods = methods.Where(x => x.AccessModifier == "public").ToList();
+        var privateMethods = methods.Where(x => x.AccessModifier == "private" || string.IsNullOrEmpty(x.AccessModifier)).ToList();
+        var protectedMethods = methods.Where(x => x.AccessModifier == "protected").ToList();
 
-        // Build public methods
-        foreach (var pub in publicMethods)
+        // Try build public methods
+        if (publicMethods.Count > 0)
         {
-            // Remove accounted method
-            _parser.Components.Remove(pub);
-            BuildMethod(pub);
+            Append("public:");
+            IncrementIndent();
+            foreach (var pub in publicMethods)
+            {
+                // Remove accounted method
+                _filePack.RemoveComponent(pub);
+                BuildMethod(pub);
+            }
+            DecrementIndent();
         }
 
-        // Build private methods
-        foreach (var priv in privateMethods)
+        // Try build protected methods
+        if (protectedMethods.Count > 0)
         {
-            // Remove accounted method
-            _parser.Components.Remove(priv);
-            BuildMethod(priv);
+            Append("protected:");
+            IncrementIndent();
+            foreach (var prot in protectedMethods)
+            {
+                // Remove accounted method
+                _filePack.RemoveComponent(prot);
+                BuildMethod(prot);
+            }
+            DecrementIndent();
         }
 
-        // Build protected methods
-        foreach (var prot in protectedMethods)
+        // Try build private methods
+        if (privateMethods.Count > 0)
         {
-            // Remove accounted method
-            _parser.Components.Remove(prot);
-            BuildMethod(prot);
+            Append("private:");
+            IncrementIndent();
+            foreach (var priv in privateMethods)
+            {
+                // Remove accounted method
+                _filePack.RemoveComponent(priv);
+                BuildMethod(priv);
+            }
+            DecrementIndent();
         }
     }
 
     protected override void ConstructFields(List<FieldComponent> fields)
     {
-        foreach (var field in fields)
+        var publicFields = fields.Where(x => x.AccessModifier == "public").ToList();
+        var privateFields = fields.Where(x => x.AccessModifier == "private" || string.IsNullOrEmpty(x.AccessModifier)).ToList();
+        var protectedFields = fields.Where(x => x.AccessModifier == "protected").ToList();
+
+        // Try build public fields
+        if (publicFields != null && publicFields.Count > 0)
         {
-            // Remove accounted field
-            _parser.Components.Remove(field);
-            BuildField(field);
+            Append("public:");
+            IncrementIndent();
+            foreach (var pub in publicFields)
+            {
+                // Remove accounted field
+                _filePack.RemoveComponent(pub);
+                BuildField(pub);
+            }
+            Append();
+            DecrementIndent();
         }
 
-        Append();
+        // Try build protected fields
+        if (protectedFields != null && protectedFields.Count > 0)
+        {
+            Append("protected:");
+            IncrementIndent();
+            foreach (var prot in protectedFields)
+            {
+                // Remove accounted field
+                _filePack.RemoveComponent(prot);
+                BuildField(prot);
+            }
+            Append();
+            DecrementIndent();
+        }
+    
+        // Try build private fields
+        if (privateFields != null && privateFields.Count > 0)
+        {
+            Append("private:");
+            IncrementIndent();
+            foreach (var priv in privateFields)
+            {
+                // Remove accounted field
+                _filePack.RemoveComponent(priv);
+                BuildField(priv);
+            }
+            Append();
+            DecrementIndent();
+        }
     }
 
     protected override void ConvertProperty(in ClassComponent classComponent)
@@ -333,7 +379,7 @@ internal sealed class JavaLinker : Linker
         foreach (var property in classComponent.Properties)
         {
             // Remove account property
-            _parser.Components.Remove(property);
+            _filePack.RemoveComponent(property);
 
             // Create the backing field
             var span = property.Name.AsSpan();
@@ -344,7 +390,7 @@ internal sealed class JavaLinker : Linker
             // Try create getter
             if (property.CanRead)
             {
-                var methodComponent = new MethodComponent(property.AccessModifier, property.SpecialModifier, property.Type, $"get{property.Name}");
+                var methodComponent = new MethodComponent(property.AccessModifier, property.SpecialModifier, $"const {TryConvertTypeToCpp(property.Type)}&", $"get{property.Name}");
                 methodComponent.AddToBody($"return {fieldComponent.Name};");
                 classComponent.AddMethod(methodComponent);
             }
@@ -355,7 +401,7 @@ internal sealed class JavaLinker : Linker
                 var accessor = (!string.IsNullOrEmpty(property.WriteAccessModifier)) ? property.WriteAccessModifier : "public";
 
                 var argName = "value";
-                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new KeyValuePair<string, string>(argName, TryConvertTypeToJava(property.Type)));
+                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new KeyValuePair<string, string>(argName, TryConvertTypeToCpp(property.Type)));
                 methodComponent.AddToBody($"{fieldComponent.Name} = {argName};");
                 classComponent.AddMethod(methodComponent);
             }
@@ -364,26 +410,30 @@ internal sealed class JavaLinker : Linker
 
     #endregion
 
-    #region Building
+    #region FileBuilding
 
     public override IEnumerable<string> BuildFileLines()
     {
         // FORMATTING
 
+        // Pragma once
+        Append("#pragma once");
+        Append();
+
+        // Imports
+        foreach (var import in _filePack.Imports)
+        {
+            Append(FormatImport(import));
+        }
+        Append();
+
         // Build containers
-        var containers = _parser.Containers;
+        var containers = _filePack.Containers;
         foreach (var container in containers)
         {
             // Remove accounted container
-            _parser.Components.Remove(container);
+            _filePack.RemoveComponent(container);
             BuildContainer(container);
-
-            // Imports
-            foreach (var import in _parser.Imports)
-            {
-                Append(FormatImport(import));
-            }
-            Append();
 
             // Build classes
             ConstructClass(container.Classes);
@@ -417,8 +467,9 @@ internal sealed class JavaLinker : Linker
         var formatContainer = FormatContainer(containerComponent);
 
         // Write formatted data
-        Append(formatContainer);        
-        Append();
+        Append(formatContainer);
+        Append("{");
+        IncrementIndent();
     }
 
     private void BuildClass(in ClassComponent classComponent)
@@ -472,22 +523,34 @@ internal sealed class JavaLinker : Linker
 
     #region Helpers
 
-    private static string TryConvertTypeToJava(string type)
+    private static string TryConvertTypeToCpp(string type)
     {
-        if (_commonTypeConversions.TryGetValue(type, out var javaType))
+        // Convert array types
+        var span = type.AsSpan();
+        var typeName = type;
+        var suffix = string.Empty;
+        var tryArrayIndex = type.IndexOf('[');
+        if (tryArrayIndex != -1)
         {
-            return javaType;
+            typeName = span[..tryArrayIndex].ToString();
+            suffix = _arrayConversion;
         }
 
-        return type;
+        // Convert type name
+        if (_commonTypeConversions.TryGetValue(typeName, out var cppType))
+        {
+            return $"{cppType}{suffix}";
+        }
+
+        return $"{typeName}{suffix}";
     }
 
-    private static string ConvertMethodNameToJava(string name)
+    private static string ConvertMethodNameToCpp(string name)
     {
         var span = name.AsSpan();
-        var javaName = span[0..1];
+        var cppName = span[0..1];
 
-        return $"{javaName.ToString().ToLower()}{span[1..].ToString()}";
+        return $"{cppName.ToString().ToLower()}{span[1..].ToString()}";
     }
 
     #endregion

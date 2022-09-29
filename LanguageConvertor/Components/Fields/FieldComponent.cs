@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace LanguageConvertor.Components;
 
-internal sealed class FieldComponent : IComponent
+public sealed class FieldComponent : IComponent
 {
-    public string? AccessModifier { get; set; }
-    public string? SpecialModifier { get; set; }
-    public string Type { get; set; }
-    public string Name { get; set; }
-    public string? Value { get; set; }
+    public string AccessModifier { get; set; } = string.Empty;
+    public string SpecialModifier { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Value { get; set; } = string.Empty;
 
     public bool IsConst { get => SpecialModifier == "const"; }
     public bool IsStatic { get => SpecialModifier == "static"; }
@@ -21,7 +21,11 @@ internal sealed class FieldComponent : IComponent
     public bool IsProtected { get => AccessModifier == "protected"; }
     public bool HasValue { get => string.IsNullOrEmpty(Value); }
 
-    public FieldComponent(string? accessModifier, string? specialModifier, string type, string name, string? value)
+    public FieldComponent()
+    {
+    }
+
+    public FieldComponent(string accessModifier, string specialModifier, string type, string name, string value)
     {
         AccessModifier = accessModifier;
         SpecialModifier = specialModifier;

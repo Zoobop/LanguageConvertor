@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LanguageConvertor.Components;
 
-internal sealed class PropertyComponent : IComponent
+public sealed class PropertyComponent : IComponent
 {
     public string? AccessModifier { get; set; }
     public string? SpecialModifier { get; set; }

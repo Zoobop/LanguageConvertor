@@ -29,6 +29,10 @@ internal sealed class PythonLinker : Linker
     {
     }
 
+    public PythonLinker(in FilePack filePack) : base(filePack)
+    {
+    }
+
     protected override ConvertibleLanguage GetLanguage()
     {
         return ConvertibleLanguage.Python;

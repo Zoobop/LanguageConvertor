@@ -15,7 +15,7 @@ internal enum ComponentType
     Field
 }
 
-internal interface IComponent
+public interface IComponent
 {
     public string Name { get; set; }
 
