@@ -33,7 +33,7 @@ internal abstract class Linker
     protected abstract ConvertibleLanguage GetLanguage();
     protected abstract string GetImportKeyword();
     protected abstract string GetContainerKeyword();
-    protected abstract string FormatImport(string import);
+    protected abstract string FormatImport(in ImportComponent importComponent);
     protected abstract string FormatContainer(in ContainerComponent containerComponent);
     protected abstract string FormatClass(in ClassComponent classComponent);
     protected abstract string FormatMethod(in MethodComponent methodComponent);

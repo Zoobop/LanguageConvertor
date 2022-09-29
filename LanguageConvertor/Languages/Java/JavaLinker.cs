@@ -43,9 +43,9 @@ internal sealed class JavaLinker : Linker
 
     #region Formatting
 
-    protected override string FormatImport(string importName)
+    protected override string FormatImport(in ImportComponent importComponent)
     {
-        return $"{GetImportKeyword()} {importName}.Java.Example.*;";
+        return $"{GetImportKeyword()} {importComponent.Name}.*;";
     }
 
     protected override string FormatContainer(in ContainerComponent containerComponent)
@@ -271,7 +271,7 @@ internal sealed class JavaLinker : Linker
         foreach (var classComponent in classes)
         {
             // Remove accounted class
-            _parser.Components.Remove(classComponent);
+            _filePack.RemoveComponent(classComponent);
             BuildClass(classComponent);
 
             // Convert properties
@@ -299,7 +299,7 @@ internal sealed class JavaLinker : Linker
         foreach (var pub in publicMethods)
         {
             // Remove accounted method
-            _parser.Components.Remove(pub);
+            _filePack.RemoveComponent(pub);
             BuildMethod(pub);
         }
 
@@ -307,7 +307,7 @@ internal sealed class JavaLinker : Linker
         foreach (var priv in privateMethods)
         {
             // Remove accounted method
-            _parser.Components.Remove(priv);
+            _filePack.RemoveComponent(priv);
             BuildMethod(priv);
         }
 
@@ -315,7 +315,7 @@ internal sealed class JavaLinker : Linker
         foreach (var prot in protectedMethods)
         {
             // Remove accounted method
-            _parser.Components.Remove(prot);
+            _filePack.RemoveComponent(prot);
             BuildMethod(prot);
         }
     }
@@ -325,7 +325,7 @@ internal sealed class JavaLinker : Linker
         foreach (var field in fields)
         {
             // Remove accounted field
-            _parser.Components.Remove(field);
+            _filePack.RemoveComponent(field);
             BuildField(field);
         }
 
@@ -337,7 +337,7 @@ internal sealed class JavaLinker : Linker
         foreach (var property in classComponent.Properties)
         {
             // Remove account property
-            _parser.Components.Remove(property);
+            _filePack.RemoveComponent(property);
 
             // Create the backing field
             var span = property.Name.AsSpan();
@@ -375,15 +375,15 @@ internal sealed class JavaLinker : Linker
         // FORMATTING
 
         // Build containers
-        var containers = _parser.Containers;
+        var containers = _filePack.Containers;
         foreach (var container in containers)
         {
             // Remove accounted container
-            _parser.Components.Remove(container);
+            _filePack.RemoveComponent(container);
             BuildContainer(container);
 
             // Imports
-            foreach (var import in _parser.Imports)
+            foreach (var import in _filePack.Imports)
             {
                 Append(FormatImport(import));
             }

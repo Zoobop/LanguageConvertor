@@ -9,11 +9,15 @@ namespace LanguageConvertor.Components;
 public sealed class ContainerComponent : IComponent
 {
     public string Name { get; set; } = string.Empty;
-    public bool IsFileScoped { get; } = false;
-    public List<ContainerComponent> Containers { get; } = new List<ContainerComponent>();
-    public List<ClassComponent> Classes { get; } = new List<ClassComponent>();
-    public int Count { get => Classes.Count; }
+    public bool IsFileScoped { get; init; } = false;
+    public List<ContainerComponent> Containers { get; init; } = new List<ContainerComponent>();
+    public List<ClassComponent> Classes { get; init; } = new List<ClassComponent>();
+    public int Count => Classes.Count;
 
+    public ContainerComponent()
+    {
+    }
+    
     public ContainerComponent(string name, bool isFileScoped)
     {
         Name = name;
@@ -25,6 +29,11 @@ public sealed class ContainerComponent : IComponent
         Name = name;
         IsFileScoped = isFileScoped;
         Classes = classes;
+    }
+
+    public void AddClass(in ClassComponent classComponent)
+    {
+        Classes.Add(classComponent);
     }
 
     public static ContainerComponent Parse(string containerData)

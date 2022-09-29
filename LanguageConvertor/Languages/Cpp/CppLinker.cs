@@ -1,10 +1,8 @@
-﻿using LanguageConvertor.Components;
+﻿using System.Text;
+
+using LanguageConvertor.Components;
 using LanguageConvertor.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using LanguageConvertor.Utility;
 
 namespace LanguageConvertor.Languages;
 
@@ -53,9 +51,10 @@ internal sealed class CppLinker : Linker
 
     #region Formatting
 
-    protected override string FormatImport(string importName)
+    protected override string FormatImport(in ImportComponent importComponent)
     {
-        return $"{GetImportKeyword()} \"Example/{importName}.hpp\"";
+        var importName = importComponent.IsBuiltin ? $"<{importComponent.Name}>" : $"\"{importComponent.Name}.hpp\"";
+        return $"{GetImportKeyword()} {importName}";
     }
 
     protected override string FormatContainer(in ContainerComponent containerComponent)
@@ -429,20 +428,31 @@ internal sealed class CppLinker : Linker
 
         // Build containers
         var containers = _filePack.Containers;
-        foreach (var container in containers)
+        if (!containers.IsEmpty())
         {
-            // Remove accounted container
-            _filePack.RemoveComponent(container);
-            BuildContainer(container);
-
-            // Build classes
-            ConstructClass(container.Classes);
-
-            // Close scopes
-            while (_indentLevel != 0)
+            foreach (var container in containers)
             {
-                DecrementIndent();
-                Append("}");
+                // Remove accounted container
+                _filePack.RemoveComponent(container);
+                BuildContainer(container);
+
+                // Build classes
+                ConstructClass(container.Classes);
+
+                // Close scopes
+                while (_indentLevel != 0)
+                {
+                    DecrementIndent();
+                    Append("}");
+                }
+            }
+        }
+        else
+        {
+            var classes = _filePack.Classes;
+            if (!classes.IsEmpty())
+            {
+                ConstructClass(classes);
             }
         }
 

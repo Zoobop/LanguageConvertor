@@ -4,8 +4,8 @@ namespace LanguageConvertor.Core;
 
 public struct FilePack
 {
-    public ConvertibleLanguage Language { get; private set; }
-    public List<string> Imports { get; } = new List<string>();
+    public ConvertibleLanguage Language { get; private set; } = ConvertibleLanguage.Java;
+    public List<ImportComponent> Imports { get; } = new List<ImportComponent>();
     public List<ContainerComponent> Containers { get; } = new List<ContainerComponent>();
     public List<ClassComponent> Classes { get; } = new List<ClassComponent>();
     public List<MethodComponent> Methods { get; } = new List<MethodComponent>();
@@ -14,9 +14,13 @@ public struct FilePack
     public ISet<IComponent> Components { get; } = new HashSet<IComponent>();
     public int TotalCount { get => Components.Count; }
 
+    public FilePack()
+    {
+    }
+    
     public FilePack(
         ConvertibleLanguage language,
-        List<string> imports, 
+        List<ImportComponent> imports, 
         List<ContainerComponent> containers, 
         List<ClassComponent> classes, 
         List<MethodComponent> methods, 
@@ -60,9 +64,9 @@ public struct FilePack
         Language = language;
     }
 
-    public void AddImport(string import)
+    public void AddImport(in ImportComponent importComponent)
     {
-        Imports.Add(import);
+        Imports.Add(importComponent);
     }
 
     public void AddContainer(in ContainerComponent containerComponent)
@@ -95,7 +99,7 @@ public struct FilePack
         Components.Add(component);
     }
 
-    public void RemoveComponent(IComponent component)
+    public readonly void RemoveComponent(IComponent component)
     {
         Components.Remove(component);
     }

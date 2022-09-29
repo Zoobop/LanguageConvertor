@@ -4,8 +4,7 @@ namespace LanguageConvertor.Core;
 
 internal sealed class Parser
 {
-
-    internal sealed class ComponentPack
+    private sealed class ComponentPack
     {
         public IComponent Component { get; }
         public ComponentType Type { get; }
@@ -154,7 +153,7 @@ internal sealed class Parser
     
     #region ParseComponents
 
-    private string ParseImportStatement(in string line)
+    private ImportComponent ParseImportStatement(in string line)
     {
         var span = line.AsSpan();
         span = span.Trim().TrimEnd(';');
@@ -163,7 +162,7 @@ internal sealed class Parser
         var importIndex = span.IndexOf(' ');
         var importName = span[++importIndex..].ToString();
 
-        return importName;
+        return new ImportComponent(importName, false);
     }
 
     private ContainerComponent ParseContainer(in string line)
