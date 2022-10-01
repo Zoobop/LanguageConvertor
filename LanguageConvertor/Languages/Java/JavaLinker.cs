@@ -148,9 +148,9 @@ internal sealed class JavaLinker : Linker
         if (hasParameters)
         {
             // Format each parameter
-            foreach (var (argName, argType) in methodComponent.Parameters)
+            foreach (var parameter in methodComponent.Parameters)
             {
-                format.Append($"{TryConvertTypeToJava(argType)} {argName}, ");
+                format.Append($"{TryConvertTypeToJava(parameter.Type)} {parameter.Name}, ");
             }
 
             // Trim end
@@ -359,7 +359,7 @@ internal sealed class JavaLinker : Linker
                 var accessor = (!string.IsNullOrEmpty(property.WriteAccessModifier)) ? property.WriteAccessModifier : "public";
 
                 var argName = "value";
-                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new KeyValuePair<string, string>(argName, TryConvertTypeToJava(property.Type)));
+                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new ParameterComponent("", TryConvertTypeToJava(property.Type), argName));
                 methodComponent.AddToBody($"{fieldComponent.Name} = {argName};");
                 classComponent.AddMethod(methodComponent);
             }

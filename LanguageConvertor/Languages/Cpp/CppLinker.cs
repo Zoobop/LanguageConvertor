@@ -132,9 +132,9 @@ internal sealed class CppLinker : Linker
         if (hasParameters)
         {
             // Format each parameter
-            foreach (var (argName, argType) in methodComponent.Parameters)
+            foreach (var parameter in methodComponent.Parameters)
             {
-                format.Append($"const {TryConvertTypeToCpp(argType)}& {argName}, ");
+                format.Append($"{parameter.Modifier} {TryConvertTypeToCpp(parameter.Type)}& {parameter.Name}, ");
             }
 
             // Trim end
@@ -389,7 +389,7 @@ internal sealed class CppLinker : Linker
             // Try create getter
             if (property.CanRead)
             {
-                var methodComponent = new MethodComponent(property.AccessModifier, property.SpecialModifier, $"const {TryConvertTypeToCpp(property.Type)}&", $"get{property.Name}");
+                var methodComponent = new MethodComponent(property.AccessModifier, property.SpecialModifier, TryConvertTypeToCpp(property.Type), $"get{property.Name}");
                 methodComponent.AddToBody($"return {fieldComponent.Name};");
                 classComponent.AddMethod(methodComponent);
             }
@@ -400,7 +400,7 @@ internal sealed class CppLinker : Linker
                 var accessor = (!string.IsNullOrEmpty(property.WriteAccessModifier)) ? property.WriteAccessModifier : "public";
 
                 var argName = "value";
-                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new KeyValuePair<string, string>(argName, TryConvertTypeToCpp(property.Type)));
+                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new ParameterComponent("", TryConvertTypeToCpp(property.Type), argName));
                 methodComponent.AddToBody($"{fieldComponent.Name} = {argName};");
                 classComponent.AddMethod(methodComponent);
             }

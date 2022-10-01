@@ -123,9 +123,9 @@ internal sealed class PythonLinker : Linker
         {
             // Format each parameter
             format.Append(", ");
-            foreach (var (argName, argType) in methodComponent.Parameters)
+            foreach (var parameter in methodComponent.Parameters)
             {
-                format.Append($"{argName}: {TryConvertTypeToPython(argType)}, ");
+                format.Append($"{parameter.Name}: {TryConvertTypeToPython(parameter.Type)}, ");
             }
 
             // Trim end
@@ -337,7 +337,7 @@ internal sealed class PythonLinker : Linker
                 var accessor = (!string.IsNullOrEmpty(property.WriteAccessModifier)) ? property.WriteAccessModifier : "public";
 
                 var argName = "value";
-                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new KeyValuePair<string, string>(argName, TryConvertTypeToPython(property.Type)));
+                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new ParameterComponent("", TryConvertTypeToPython(property.Type), argName));
                 methodComponent.AddToBody($"self.{fieldComponent.Name} = {argName}");
                 classComponent.AddMethod(methodComponent);
             }

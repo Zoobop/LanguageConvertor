@@ -4,26 +4,9 @@ namespace LanguageConvertor.Core;
 
 internal sealed class Parser
 {
-    private sealed class ComponentPack
-    {
-        public IComponent Component { get; }
-        public ComponentType Type { get; }
-
-        public ComponentPack(in IComponent component, ComponentType type)
-        {
-            Component = component;
-            Type = type;
-        }
-
-        public override string ToString()
-        {
-            return Component.Name;
-        }
-    }
-
     public FilePack FilePack { get; } = new FilePack();
 
-    private Stack<ComponentPack> _scopeStack { get; } = new Stack<ComponentPack>();
+    private Stack<IComponent> _scopeStack { get; } = new Stack<IComponent>();
 
     public Parser(in string[] data)
     {
@@ -53,7 +36,7 @@ internal sealed class Parser
                 var container = ParseContainer(line);
 
                 FilePack.AddContainer(container);
-                Feed(container, ComponentType.Container, true);
+                Feed(container, true);
             }
             // CLASSES
             else if (IsClass(line))
@@ -61,7 +44,7 @@ internal sealed class Parser
                 var @class = ParseClass(line);
 
                 FilePack.AddClass(@class);
-                Feed(@class, ComponentType.Class, true);
+                Feed(@class, true);
             }
             // METHODS
             else if (IsMethod(line))
@@ -76,7 +59,7 @@ internal sealed class Parser
                 }
 
                 FilePack.AddMethod(method);
-                Feed(method, ComponentType.Method, true);
+                Feed(method, true);
             }
             // END SCOPE
             else if (IsEndScope(line))
@@ -89,7 +72,7 @@ internal sealed class Parser
                 var field = ParseField(line);
 
                 FilePack.AddField(field);
-                Feed(field, ComponentType.Field);
+                Feed(field);
             }
             // PROPERTIES
             else if (IsProperty(line))
@@ -97,7 +80,7 @@ internal sealed class Parser
                 var property = ParseProperty(line);
 
                 FilePack.AddProperty(property);
-                Feed(property, ComponentType.Property);
+                Feed(property);
             }
 
             Console.WriteLine($"[{string.Join(':', _scopeStack)}]");
@@ -153,7 +136,7 @@ internal sealed class Parser
     
     #region ParseComponents
 
-    private ImportComponent ParseImportStatement(in string line)
+    private static ImportComponent ParseImportStatement(in string line)
     {
         var span = line.AsSpan();
         span = span.Trim().TrimEnd(';');
@@ -165,7 +148,7 @@ internal sealed class Parser
         return new ImportComponent(importName, false);
     }
 
-    private ContainerComponent ParseContainer(in string line)
+    private static ContainerComponent ParseContainer(in string line)
     {
         var span = line.AsSpan();
         span = span.Trim();
@@ -192,7 +175,7 @@ internal sealed class Parser
         return new ContainerComponent(name, isFileScoped);
     }
 
-    private ClassComponent ParseClass(in string line)
+    private static ClassComponent ParseClass(in string line)
     {
         var span = line.AsSpan();
         span = span.Trim();
@@ -284,7 +267,7 @@ internal sealed class Parser
         return new ClassComponent(accessor, special, name, parent, interfaces);
     }
 
-    private FieldComponent ParseField(in string line)
+    private static FieldComponent ParseField(in string line)
     {
         var span = line.AsSpan();
         span = span.Trim();
@@ -338,7 +321,7 @@ internal sealed class Parser
         return new FieldComponent(accessor, special, type, name, value);
     }
 
-    private PropertyComponent ParseProperty(in string line)
+    private static PropertyComponent ParseProperty(in string line)
     {
         var span = line.AsSpan();
         span = span.Trim();
@@ -423,14 +406,14 @@ internal sealed class Parser
         return new PropertyComponent(accessor, special, type, name, value, canRead, canWrite, writeAccessModifier);
     }
 
-    private MethodComponent ParseMethod(in string line)
+    private static MethodComponent ParseMethod(in string line)
     {
         var span = line.AsSpan();
         span = span.Trim();
 
         var accessor = string.Empty;
         var special = string.Empty;
-        var parameters = new Dictionary<string, string>();
+        var parameters = new List<ParameterComponent>();
 
         // Try get accessor
         var hasAccess = span.StartsWith("public") || span.StartsWith("private") || span.StartsWith("protected");
@@ -504,7 +487,7 @@ internal sealed class Parser
                 span = span[argNameIndex..].Trim();
 
                 //Console.WriteLine($"[{argType}:{argName}]");
-                parameters.Add(argName, argType);
+                parameters.Add(new ParameterComponent("", argType, argName));
 
                 // Break
                 if (tryArgIndex == -1) hasArgs = false;
@@ -518,7 +501,7 @@ internal sealed class Parser
 
     #region Helpers
 
-    private List<string> GetMethodBody(in string[] data, ref int index)
+    private static List<string> GetMethodBody(in string[] data, ref int index)
     {
         var methodBody = new List<string>();
 
@@ -551,14 +534,14 @@ internal sealed class Parser
         return methodBody;
     }
 
-    private void Feed(in IComponent component, ComponentType type, bool isScope = false)
+    private void Feed(in IComponent component, bool isScope = false)
     {
         var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
-        currentScope?.Component.AddComponent(component);
+        currentScope?.AddComponent(component);
         FilePack.AddComponent(component);
         if (isScope)
         {
-            _scopeStack.Push(new ComponentPack(component, type));
+            _scopeStack.Push(component);
         }
     }
 

@@ -36,7 +36,7 @@ public sealed class ContainerComponent : IComponent
         Classes.Add(classComponent);
     }
 
-    public static ContainerComponent Parse(string containerData)
+    /*public static ContainerComponent Parse(string containerData)
     {
         var span = containerData.AsSpan();
         span = span.Trim();
@@ -61,21 +61,11 @@ public sealed class ContainerComponent : IComponent
         }
 
         return new ContainerComponent(name, isFileScoped);
-    }
-
-    public string Definition()
-    {
-        return $"[{Name}] [{IsFileScoped}]";
-    }
+    }*/
 
     public override string ToString()
     {
         return Name;
-    }
-
-    public bool IsScope()
-    {
-        return true;
     }
 
     public void AddComponent(in IComponent component)

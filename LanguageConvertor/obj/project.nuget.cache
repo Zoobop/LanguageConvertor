@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "mPatthknwjC8Gp8gkgPtq0ac/usELAP2SGw15+io2KeIjvZPZnQbwHXaFGoDOpllKjcI0/4Se/wTgmNFUd8R5A==",
+  "dgSpecHash": "TG3iNY1FrXF/GlxIHmqN63Ut3MTRCud/FO+7l9cCjRU0hNszk2Cl85HU5/HCkCezGwDIM0k6+O9CLkD7Cr3E5g==",
   "success": true,
-  "projectFilePath": "C:\\dev\\CodeGenerator\\LanguageConvertor\\LanguageConvertor\\LanguageConvertor.csproj",
+  "projectFilePath": "C:\\dev\\CSharp\\LanguageConvertor\\LanguageConvertor\\LanguageConvertor.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

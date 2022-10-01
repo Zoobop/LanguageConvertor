@@ -16,7 +16,7 @@ public sealed class FieldComponent : IComponent
 
     public bool IsConst { get => SpecialModifier == "const"; }
     public bool IsStatic { get => SpecialModifier == "static"; }
-    public bool IsPrivate { get => AccessModifier == "private" || AccessModifier == null; }
+    public bool IsPrivate { get => AccessModifier is "private" or null; }
     public bool IsPublic { get => AccessModifier == "public"; }
     public bool IsProtected { get => AccessModifier == "protected"; }
     public bool HasValue { get => string.IsNullOrEmpty(Value); }
@@ -34,7 +34,7 @@ public sealed class FieldComponent : IComponent
         Value = value;
     }
 
-    public static FieldComponent Parse(string fieldLine)
+    /*public static FieldComponent Parse(string fieldLine)
     {
         var span = fieldLine.AsSpan();
         span = span.Trim();
@@ -86,24 +86,10 @@ public sealed class FieldComponent : IComponent
         }
 
         return new FieldComponent(accessor, special, type, name, value);
-    }
-
-    public string Definition()
-    {
-        return $"[{AccessModifier}] [{SpecialModifier}] [{Type}] [{Name}] [{Value}]";
-    }
+    }*/
 
     public override string ToString()
     {
         return Name;
-    }
-
-    public bool IsScope()
-    {
-        return false;
-    }
-
-    public void AddComponent(in IComponent component)
-    {
     }
 }

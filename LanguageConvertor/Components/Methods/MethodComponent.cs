@@ -12,24 +12,24 @@ public sealed class MethodComponent : IComponent
     public string SpecialModifier { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public Dictionary<string, string> Parameters { get; init; } = new Dictionary<string, string>();
-    public List<string> Body { get; set; } = new List<string>();
+    public List<ParameterComponent> Parameters { get; init; } = new List<ParameterComponent>();
+    public List<string> Body { get; init; } = new List<string>();
 
     public bool IsStatic { get => SpecialModifier == "static"; }
-    public bool IsPrivate { get => AccessModifier == "private" || AccessModifier == null; }
+    public bool IsPrivate { get => AccessModifier is "private" or null; }
     public bool IsPublic { get => AccessModifier == "public"; }
     public bool IsProtected { get => AccessModifier == "protected"; }
     public bool IsAbstract { get => SpecialModifier == "abstract"; }
     public bool IsOverride { get => SpecialModifier == "override"; }
     public bool IsConstructor { get => string.IsNullOrEmpty(Type); }
     public bool IsVoid { get => Type == "void"; }
-    public bool HasParameters { get => Parameters != null && Parameters.Count > 0; }
+    public bool HasParameters { get => Parameters is {Count: > 0}; }
 
     public MethodComponent()
     {
     }
 
-    public MethodComponent(string accessModifier, string specialModifier, string type, string name, Dictionary<string, string> parameters)
+    public MethodComponent(string accessModifier, string specialModifier, string type, string name, List<ParameterComponent> parameters)
     {
         AccessModifier = accessModifier;
         SpecialModifier = specialModifier;
@@ -38,16 +38,13 @@ public sealed class MethodComponent : IComponent
         Parameters = parameters;
     }
 
-    public MethodComponent(string accessModifier, string specialModifier, string type, string name, params KeyValuePair<string, string>[] argPairs)
+    public MethodComponent(string accessModifier, string specialModifier, string type, string name, params ParameterComponent[] parameters)
     {
         AccessModifier = accessModifier;
         SpecialModifier = specialModifier;
         Type = type;
         Name = name;
-        foreach (var (argName, argType) in argPairs)
-        {
-            Parameters.Add(argName, argType);
-        }
+        Parameters.AddRange(parameters);
     }
 
     #region Utility
@@ -64,7 +61,7 @@ public sealed class MethodComponent : IComponent
 
     #endregion
 
-    public static MethodComponent Parse(string methodData)
+    /*public static MethodComponent Parse(string methodData)
     {
         var span = methodData.AsSpan();
         span = span.Trim();
@@ -153,12 +150,7 @@ public sealed class MethodComponent : IComponent
         }
 
         return new MethodComponent(accessor, special, type, name, parameters);
-    }
-
-    public string Definition()
-    {
-        return $"[{AccessModifier}] [{SpecialModifier}] [{Type}] [{Name}] [{(Parameters != null ? string.Join(", ", Parameters) : string.Empty)}]";
-    }
+    }*/
 
     public override string ToString()
     {

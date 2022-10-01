@@ -14,8 +14,4 @@ public sealed class ImportComponent : IComponent
         Name = name;
         IsBuiltin = isBuiltin;
     }
-    
-    public void AddComponent(in IComponent component)
-    {
-    }
 }

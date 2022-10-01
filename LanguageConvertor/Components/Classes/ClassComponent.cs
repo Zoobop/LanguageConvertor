@@ -19,7 +19,7 @@ public sealed class ClassComponent : IComponent
     public List<MethodComponent> Methods { get; } = new List<MethodComponent>();
 
     public bool IsStatic { get => SpecialModifier == "static"; }
-    public bool IsPrivate { get => AccessModifier == "private" || AccessModifier == null; }
+    public bool IsPrivate { get => AccessModifier is "private" or null; }
     public bool IsPublic { get => AccessModifier == "public"; }
     public bool IsProtected { get => AccessModifier == "protected"; }
 
@@ -56,7 +56,7 @@ public sealed class ClassComponent : IComponent
         Methods.Add(method);
     }
 
-    public static ClassComponent Parse(string classData)
+    /*public static ClassComponent Parse(string classData)
     {
         var span = classData.AsSpan();
         span = span.Trim();
@@ -148,21 +148,11 @@ public sealed class ClassComponent : IComponent
         }
 
         return new ClassComponent(accessor, special, name, parent, interfaces);
-    }
-
-    public string Definition()
-    {
-        return $"[{AccessModifier}] [{SpecialModifier}] [{Name}] [{ParentClass}] [{(Interfaces != null ? string.Join(", ", Interfaces) : string.Empty)}]";
-    }
+    }*/
 
     public override string ToString()
     {
         return Name;
-    }
-
-    public bool IsScope()
-    {
-        return true;
     }
 
     public void AddComponent(in IComponent component)

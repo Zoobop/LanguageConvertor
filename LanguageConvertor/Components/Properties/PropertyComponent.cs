@@ -20,7 +20,7 @@ public sealed class PropertyComponent : IComponent
 
     public bool IsConst { get => SpecialModifier == "const"; }
     public bool IsStatic { get => SpecialModifier == "static"; }
-    public bool IsPrivate { get => AccessModifier == "private" || AccessModifier == null; }
+    public bool IsPrivate { get => AccessModifier is "private" or null; }
     public bool IsPublic { get => AccessModifier == "public"; }
     public bool IsProtected { get => AccessModifier == "protected"; }
     public bool HasValue { get => string.IsNullOrEmpty(Value); }
