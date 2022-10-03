@@ -14,6 +14,17 @@ public readonly struct FilePack
     public ISet<IComponent> Components { get; } = new HashSet<IComponent>();
     public int TotalCount { get => Components.Count; }
 
+    public FilePack()
+    {
+        Imports = new List<ImportComponent>();
+        Containers = new List<ContainerComponent>();
+        Classes = new List<ClassComponent>();
+        Methods = new List<MethodComponent>();
+        Fields = new List<FieldComponent>();
+        Properties = new List<PropertyComponent>();
+        Components = new HashSet<IComponent>();
+    }
+
     public FilePack(ConvertibleLanguage language)
     {
         Language = language;

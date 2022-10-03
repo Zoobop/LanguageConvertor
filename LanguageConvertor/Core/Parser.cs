@@ -116,7 +116,7 @@ internal sealed class Parser
     }
     private static bool IsClass(in string line)
     {
-        return line.Contains("class");
+        return line.Contains(" class ");
     }
     private static bool IsMethod(in string line)
     {
