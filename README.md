@@ -14,16 +14,42 @@ Then, you must construct a ```FilePackBuilder``` object and pass in your config 
 ### Building A File
 ![Building A File](https://github.com/Zoobop/LanguageConvertor/blob/master/gitImages/building_Git.Image_02.png "Building A File")
 
-To add an import, simply call the ```CreateImport``` method from your ```FileBuilderConfig``` object and pass in its arguments.
+To add an import, simply call the ```CreateImport()``` method from your ```FileBuilderConfig``` object and pass in its arguments.
 Its arguments include:
-* name - import name
-* isBuiltIn - is the import built into the language
+* `name`: import name
+* `isBuiltIn`: is the import built into the language
 
 Containers, in this context, pertain to namespaces and packages. To ensure the proper encapsulation of components (classes, methods, fields), there are two methods to start and end a container.
-To add a namespace/package, simply call the ```StartContainer``` method from your ```FileBuilderConfig``` object and pass in its arguments. At the end of the container, call the ```EndContainer``` method to end container.
+To add a namespace/package, simply call the ```StartContainer()``` method from your ```FileBuilderConfig``` object and pass in its arguments. After you are done adding things to the container, call the ```EndContainer()``` method to end container.
 Its arguments include:
-* name - container name
-* isFileScoped - is the container file-scoped
+* `name`: container name
+* `isFileScoped`: is the container file-scoped
+
+Since classes also encapsulate components, there are also the two start and end methods.
+To add a class, simply call the ```StartClass()``` method from your ```FileBuilderConfig``` object and pass in its arguments. After you are done adding things to the class, call the ```EndClass()``` method to end class.
+Its arguments include:
+* `name`: class name
+* `accessModifier`: access modifier of the class
+* `specialModifier`: special modifier (static, abstract, etc...)
+* `parentClass`: inherited parent class
+* `interfaces`: inherited interfaces
+
+To add a method/function, simply call the ```CreateMethod()``` method from your ```FileBuilderConfig``` object and pass in its arguments.
+Its arguments include:
+* `name`: method name
+* `type`: return type
+* `accessModifier`: access modifier of the method
+* `specialModifier`: special modifier (static, abstract, etc...)
+* `body`: body of the method (code block)
+* `parameters`: parameters of the method
+
+To add a field to your class, simply call the ```CreateField()``` method from your ```FileBuilderConfig``` object and pass in its arguments.
+Its arguments include:
+* `name`: field name
+* `type`: field type
+* `value`: value at declaration
+* `accessModifier`: access modifier of the field
+* `specialModifier`: special modifier (static, const, etc...)
 
 ### Output To File
 ![Output To File](https://github.com/Zoobop/LanguageConvertor/blob/master/gitImages/building_Git.Image_03.png "Output")
