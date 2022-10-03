@@ -1,26 +1,19 @@
 ﻿namespace LanguageConvertor.Components;
 
-public sealed class ParameterComponent : IComponent
+public sealed class ParameterPack
 {
     public string Modifier { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
 
-    public ParameterComponent()
+    public ParameterPack()
     {
     }
 
-    public ParameterComponent(string modifier, string type, string name)
+    public ParameterPack(string name, string type, string modifier = "")
     {
         Modifier = modifier;
         Type = type;
         Name = name;
-    }
-
-    public static ParameterComponent ParseParameter(string parameterData)
-    {
-        
-        
-        return new ParameterComponent();
     }
 }

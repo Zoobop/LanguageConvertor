@@ -14,4 +14,10 @@ public sealed class ImportComponent : IComponent
         Name = name;
         IsBuiltin = isBuiltin;
     }
+
+    #region IComponent
+
+    public bool IsScope() => false;
+
+    #endregion
 }

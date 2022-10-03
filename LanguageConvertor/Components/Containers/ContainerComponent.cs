@@ -36,38 +36,15 @@ public sealed class ContainerComponent : IComponent
         Classes.Add(classComponent);
     }
 
-    /*public static ContainerComponent Parse(string containerData)
-    {
-        var span = containerData.AsSpan();
-        span = span.Trim();
-
-        var name = string.Empty;
-        var isFileScoped = false;
-
-        // Skip 'namespace' keyword
-        var namespaceIndex = span.IndexOf(' ');
-        span = span[++namespaceIndex..];
-
-        // Get name
-        var tryNameIndex = span.IndexOf(';');
-        if (tryNameIndex == -1)
-        {
-            name = span.ToString();
-        }
-        else
-        {
-            name = span[..^1].ToString();
-            isFileScoped = true;
-        }
-
-        return new ContainerComponent(name, isFileScoped);
-    }*/
-
     public override string ToString()
     {
         return Name;
     }
 
+    #region IComponent
+    
+    public bool IsScope() => true;
+    
     public void AddComponent(in IComponent component)
     {
         var type = component.GetType();
@@ -80,4 +57,6 @@ public sealed class ContainerComponent : IComponent
             Classes.Add((ClassComponent)component);
         }
     }
+    
+    #endregion
 }

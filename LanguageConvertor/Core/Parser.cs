@@ -36,7 +36,7 @@ internal sealed class Parser
                 var container = ParseContainer(line);
 
                 FilePack.AddContainer(container);
-                Feed(container, true);
+                Feed(container);
             }
             // CLASSES
             else if (IsClass(line))
@@ -44,7 +44,7 @@ internal sealed class Parser
                 var @class = ParseClass(line);
 
                 FilePack.AddClass(@class);
-                Feed(@class, true);
+                Feed(@class);
             }
             // METHODS
             else if (IsMethod(line))
@@ -59,7 +59,7 @@ internal sealed class Parser
                 }
 
                 FilePack.AddMethod(method);
-                Feed(method, true);
+                Feed(method);
             }
             // END SCOPE
             else if (IsEndScope(line))
@@ -413,7 +413,7 @@ internal sealed class Parser
 
         var accessor = string.Empty;
         var special = string.Empty;
-        var parameters = new List<ParameterComponent>();
+        var parameters = new List<ParameterPack>();
 
         // Try get accessor
         var hasAccess = span.StartsWith("public") || span.StartsWith("private") || span.StartsWith("protected");
@@ -487,7 +487,7 @@ internal sealed class Parser
                 span = span[argNameIndex..].Trim();
 
                 //Console.WriteLine($"[{argType}:{argName}]");
-                parameters.Add(new ParameterComponent("", argType, argName));
+                parameters.Add(new ParameterPack(argName, argType));
 
                 // Break
                 if (tryArgIndex == -1) hasArgs = false;
@@ -534,12 +534,12 @@ internal sealed class Parser
         return methodBody;
     }
 
-    private void Feed(in IComponent component, bool isScope = false)
+    private void Feed(in IComponent component)
     {
         var currentScope = _scopeStack.TryPeek(out var scope) ? scope : null;
         currentScope?.AddComponent(component);
         FilePack.AddComponent(component);
-        if (isScope)
+        if (component.IsScope())
         {
             _scopeStack.Push(component);
         }

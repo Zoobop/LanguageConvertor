@@ -359,7 +359,7 @@ internal sealed class JavaLinker : Linker
                 var accessor = (!string.IsNullOrEmpty(property.WriteAccessModifier)) ? property.WriteAccessModifier : "public";
 
                 var argName = "value";
-                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new ParameterComponent("", TryConvertTypeToJava(property.Type), argName));
+                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new ParameterPack(argName, TryConvertTypeToJava(property.Type)));
                 methodComponent.AddToBody($"{fieldComponent.Name} = {argName};");
                 classComponent.AddMethod(methodComponent);
             }

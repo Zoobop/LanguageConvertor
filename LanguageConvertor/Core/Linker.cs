@@ -14,6 +14,7 @@ internal abstract class Linker
     protected readonly FilePack _filePack;
     protected readonly List<string> _formattedData;
     protected int _indentLevel = 0;
+    protected bool _useLanguageSpecifics = false;
 
     protected Linker(string[] data)
     {
@@ -23,11 +24,12 @@ internal abstract class Linker
         _indentLevel = 0;
     }
 
-    protected Linker(in FilePack filePack)
+    protected Linker(in FilePack filePack, bool useLanguageSpecifics = false)
     {
         _filePack = filePack;
         _formattedData = new List<string>(_filePack.TotalCount);
         _indentLevel = 0;
+        _useLanguageSpecifics = useLanguageSpecifics;
     }
 
     protected abstract ConvertibleLanguage GetLanguage();

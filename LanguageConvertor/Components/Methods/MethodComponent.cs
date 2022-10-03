@@ -12,7 +12,7 @@ public sealed class MethodComponent : IComponent
     public string SpecialModifier { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public List<ParameterComponent> Parameters { get; init; } = new List<ParameterComponent>();
+    public List<ParameterPack> Parameters { get; init; } = new List<ParameterPack>();
     public List<string> Body { get; init; } = new List<string>();
 
     public bool IsStatic { get => SpecialModifier == "static"; }
@@ -29,7 +29,7 @@ public sealed class MethodComponent : IComponent
     {
     }
 
-    public MethodComponent(string accessModifier, string specialModifier, string type, string name, List<ParameterComponent> parameters)
+    public MethodComponent(string accessModifier, string specialModifier, string type, string name, List<ParameterPack> parameters)
     {
         AccessModifier = accessModifier;
         SpecialModifier = specialModifier;
@@ -38,7 +38,7 @@ public sealed class MethodComponent : IComponent
         Parameters = parameters;
     }
 
-    public MethodComponent(string accessModifier, string specialModifier, string type, string name, params ParameterComponent[] parameters)
+    public MethodComponent(string accessModifier, string specialModifier, string type, string name, params ParameterPack[] parameters)
     {
         AccessModifier = accessModifier;
         SpecialModifier = specialModifier;
@@ -61,107 +61,14 @@ public sealed class MethodComponent : IComponent
 
     #endregion
 
-    /*public static MethodComponent Parse(string methodData)
-    {
-        var span = methodData.AsSpan();
-        span = span.Trim();
-
-        var accessor = string.Empty;
-        var special = string.Empty;
-        var parameters = new Dictionary<string, string>();
-
-        // Try get accessor
-        var hasAccess = span.StartsWith("public") || span.StartsWith("private") || span.StartsWith("protected");
-        if (hasAccess)
-        {
-            var length = span.IndexOf(' ');
-            accessor = span[..length++].ToString();
-            //Console.WriteLine($"[{accessor}]");
-            span = span[length..];
-        }
-        
-        // Try get special
-        var hasSpecial = span.StartsWith("static") || span.StartsWith("override") || span.StartsWith("virtual");
-        if (hasSpecial)
-        {
-            var length = span.IndexOf(' ');
-            special = span[..length++].ToString();
-            //Console.WriteLine($"[{special}]");
-            span = span[length..];
-        }
-
-        // Prep type and name
-        var type = string.Empty;
-        var name = string.Empty;
-
-        // Try get constructor
-        var tryConstructorIndex = span.IndexOf(' ');
-        var nextIndex = (tryConstructorIndex != -1) ? tryConstructorIndex : span.IndexOf('(');
-        var tryConstructor = span[..(nextIndex + 1)];
-        if (tryConstructor.Contains('('))
-        {
-            // Constructor
-            var constructorIndex = span.IndexOf('(');
-            name = span[..constructorIndex].ToString();
-            // type = name;
-
-            span = span[constructorIndex..];
-        }
-        else
-        {
-            // Normal method
-            // Get type
-            var typeIndex = span.IndexOf(' ');
-            type = span[..typeIndex++].ToString();
-            span = span[typeIndex..];
-
-            // Get name
-            var nameIndex = span.IndexOf('(');
-            name = span[..nameIndex++].ToString();
-            span = span[nameIndex..];
-        }
-
-        // Try get params
-        var startParenthIndex = span.IndexOf('(');
-        var endParenthIndex = span.IndexOf(')');
-        if (endParenthIndex - startParenthIndex > 1)
-        {
-            span = span.TrimStart('(');
-            var hasArgs = true;
-            while (hasArgs)
-            {
-                // Get arg type
-                var argTypeIndex = span.IndexOf(' ');
-                var argType = span[..argTypeIndex++].ToString();
-                span = span[argTypeIndex..];
-
-                // Get arg name
-                var tryArgIndex = span.IndexOf(',');
-                var argNameIndex = (tryArgIndex == -1) ? span.IndexOf(')') : tryArgIndex;
-                var argName = span[..argNameIndex++].ToString();
-                span = span[argNameIndex..].Trim();
-
-                //Console.WriteLine($"[{argType}:{argName}]");
-                parameters.Add(argName, argType);
-
-                // Break
-                if (tryArgIndex == -1) hasArgs = false;
-            }
-        }
-
-        return new MethodComponent(accessor, special, type, name, parameters);
-    }*/
-
     public override string ToString()
     {
         return Name;
     }
 
     #region IComponent
-
-    public void AddComponent(in IComponent component)
-    {
-    }
+    
+    public bool IsScope() => true;
 
     #endregion
 }

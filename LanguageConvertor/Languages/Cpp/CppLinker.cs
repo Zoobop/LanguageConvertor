@@ -24,6 +24,12 @@ internal sealed class CppLinker : Linker
         {"string", "std::string"},
     };
 
+    private static readonly IEnumerable<string> _primitiveTypes = new HashSet<string>
+    {
+        "bool", "char", "int8_t", "int16_t", "int32_t",
+        "int64_t", "uint8_t", "uint16_t", "uint32_t", "uint64_t",
+    };
+
     private static readonly string _arrayConversion = "*";
 
     public CppLinker(string[] data) : base(data)
@@ -134,7 +140,13 @@ internal sealed class CppLinker : Linker
             // Format each parameter
             foreach (var parameter in methodComponent.Parameters)
             {
-                format.Append($"{parameter.Modifier} {TryConvertTypeToCpp(parameter.Type)}& {parameter.Name}, ");
+                var modifier = parameter.Modifier;
+                if (!string.IsNullOrEmpty(modifier))
+                {
+                    format.Append($"{modifier} ");
+                }
+                
+                format.Append($"{TryConvertTypeToCpp(parameter.Type)} {parameter.Name}, ");
             }
 
             // Trim end
@@ -260,6 +272,9 @@ internal sealed class CppLinker : Linker
             // Convert properties
             ConvertProperty(classComponent);
 
+            // Build classes
+            ConstructClass(classComponent.Classes);
+            
             // Build methods
             ConstructMethods(classComponent.Methods);
 
@@ -389,7 +404,7 @@ internal sealed class CppLinker : Linker
             // Try create getter
             if (property.CanRead)
             {
-                var methodComponent = new MethodComponent(property.AccessModifier, property.SpecialModifier, TryConvertTypeToCpp(property.Type), $"get{property.Name}");
+                var methodComponent = new MethodComponent(property.AccessModifier, property.SpecialModifier, TryConvertTypeToCpp(property.Type), $"Get{property.Name}");
                 methodComponent.AddToBody($"return {fieldComponent.Name};");
                 classComponent.AddMethod(methodComponent);
             }
@@ -400,7 +415,7 @@ internal sealed class CppLinker : Linker
                 var accessor = (!string.IsNullOrEmpty(property.WriteAccessModifier)) ? property.WriteAccessModifier : "public";
 
                 var argName = "value";
-                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"set{property.Name}", new ParameterComponent("", TryConvertTypeToCpp(property.Type), argName));
+                var methodComponent = new MethodComponent(accessor, property.SpecialModifier, "void", $"Set{property.Name}", new ParameterPack(argName, TryConvertTypeToCpp(property.Type)));
                 methodComponent.AddToBody($"{fieldComponent.Name} = {argName};");
                 classComponent.AddMethod(methodComponent);
             }
@@ -533,8 +548,10 @@ internal sealed class CppLinker : Linker
 
     #region Helpers
 
-    private static string TryConvertTypeToCpp(string type)
+    private string TryConvertTypeToCpp(string type)
     {
+        if (!_useLanguageSpecifics) return type;
+        
         // Convert array types
         var span = type.AsSpan();
         var typeName = type;
@@ -555,8 +572,10 @@ internal sealed class CppLinker : Linker
         return $"{typeName}{suffix}";
     }
 
-    private static string ConvertMethodNameToCpp(string name)
+    private string ConvertMethodNameToCpp(string name)
     {
+        if (!_useLanguageSpecifics) return name;
+        
         var span = name.AsSpan();
         var cppName = span[0..1];
 

@@ -27,6 +27,15 @@ public sealed class ClassComponent : IComponent
     {
     }
 
+    public ClassComponent(string accessModifier, string specialModifier, string name, string parentClass, params string[] interfaces)
+    {
+        AccessModifier = accessModifier;
+        SpecialModifier = specialModifier;
+        Name = name;
+        ParentClass = parentClass;
+        Interfaces = new List<string>(interfaces);
+    }
+    
     public ClassComponent(string accessModifier, string specialModifier, string name, string parentClass, List<string> interfaces)
     {
         AccessModifier = accessModifier;
@@ -56,105 +65,15 @@ public sealed class ClassComponent : IComponent
         Methods.Add(method);
     }
 
-    /*public static ClassComponent Parse(string classData)
-    {
-        var span = classData.AsSpan();
-        span = span.Trim();
-
-        var accessor = string.Empty;
-        var special = string.Empty;
-        var name = string.Empty;
-        var parent = string.Empty;
-        var interfaces = new List<string>();
-
-        // Try get accessor
-        var hasAccess = span.StartsWith("public") || span.StartsWith("private") || span.StartsWith("protected");
-        if (hasAccess)
-        {
-            var length = span.IndexOf(' ');
-            accessor = span[..length++].ToString();
-            //Console.WriteLine($"[{accessor}]");
-            span = span[length..];
-        }
-        
-        // Try get special
-        var hasSpecial = span.StartsWith("static") || span.StartsWith("sealed") || span.StartsWith("virtual") || span.StartsWith("abstract");
-        if (hasSpecial)
-        {
-            var length = span.IndexOf(' ');
-            special = span[..length++].ToString();
-            //Console.WriteLine($"[{special}]");
-            span = span[length..];
-        }
-
-        // Skip 'class' keyword
-        var classIndex = span.IndexOf(' ');
-        span = span[++classIndex..];
-
-        // Get name
-        var tryNameIndex = span.IndexOf(' ');
-        if (tryNameIndex == -1)
-        {
-            name = span.ToString();
-        }
-        else
-        {
-            name = span[..tryNameIndex++].ToString();
-            //Console.WriteLine($"[{name}]");
-            span = span[tryNameIndex..];
-        }
-
-        // Try get parents
-        var baseIndex = span.IndexOf(':');
-        if (baseIndex != -1)
-        {
-            var startIndex = baseIndex + 2;
-            span = span[startIndex..].Trim();
-
-            var hasParents = true;
-            while (hasParents)
-            {
-                // Get parent
-                var tryParentIndex = span.IndexOf(',');
-                var currentParent = string.Empty;
-                if (tryParentIndex == -1)
-                {
-                    // Last one
-                    currentParent = span.ToString();
-                }
-                else
-                {
-                    currentParent = span[..tryParentIndex++].ToString();
-                    span = span[++tryParentIndex..];
-                }
-
-                //Console.WriteLine($"[{currentParent}]");
-
-                // Interface check
-                if (currentParent.StartsWith('I'))
-                {
-                    // Interface
-                    interfaces.Add(currentParent);
-                }
-                else
-                {
-                    // Class
-                    parent = currentParent;
-                }
-
-                // Break
-                if (tryParentIndex == -1) hasParents = false;
-            }
-        }
-
-        return new ClassComponent(accessor, special, name, parent, interfaces);
-    }*/
-
     public override string ToString()
     {
         return Name;
     }
 
+    #region IComponent
+
+    public bool IsScope() => true;
+    
     public void AddComponent(in IComponent component)
     {
         var type = component.GetType();
@@ -179,4 +98,6 @@ public sealed class ClassComponent : IComponent
             Fields.Add(field);
         }
     }
+    
+    #endregion
 }
