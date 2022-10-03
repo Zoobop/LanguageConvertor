@@ -14,12 +14,6 @@ Then, you must construct a ```FilePackBuilder``` object and pass in your config 
 ### Building A File
 ![Building A File](https://github.com/Zoobop/LanguageConvertor/blob/master/gitImages/building_Git.Image_02.png "Building A File")
 
-The structure of building a file should follow the standard language format:
-* Imports
-* Container/Namespace
-* Class
-* Function (if applicable)
-
 To add an import, simply call the ```CreateImport``` method from your ```FileBuilderConfig``` object and pass in its arguments.
 Its arguments include:
 * name - import name
