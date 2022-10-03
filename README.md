@@ -54,7 +54,12 @@ Its arguments include:
 ### Output To File
 ![Output To File](https://github.com/Zoobop/LanguageConvertor/blob/master/gitImages/building_Git.Image_03.png "Output")
 
+To recieve the result of the build, construct a ```Convertor``` object, and pass in your ```FilePackBuilder``` object.
+This converts your components into an ```IEnumerable<string>``` behind the scenes, which holds the lines of the formatted language.
+You can get that formatted data directly by calling the ```GetData()``` method from your ```Convertor``` object, 
+or if you want to send that data directly to a file, call the ```ToFile()``` method, passing in the output path for where you want your file to go.
 
+The above figure shows both cases.
 
 ### Results
 ![Output](https://github.com/Zoobop/LanguageConvertor/blob/master/gitImages/building_Git.Image_04.png "Output")
