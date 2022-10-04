@@ -38,7 +38,7 @@ Its arguments include:
 * `interfaces`: inherited interfaces
 
 To add a method/function, simply call the ```CreateMethod()``` method from your ```FileBuilderConfig``` object and pass in its arguments.
-Its arguments include:
+Its arguments include: (_Note: There is more than 1 overload_)
 * `name`: method name
 * `type`: return type
 * `accessModifier`: access modifier of the method
