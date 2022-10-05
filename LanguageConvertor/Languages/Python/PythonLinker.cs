@@ -1,10 +1,12 @@
 ﻿using LanguageConvertor.Components;
 using LanguageConvertor.Core;
+using LanguageConvertor.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace LanguageConvertor.Languages;
 
@@ -22,8 +24,6 @@ internal sealed class PythonLinker : Linker
         {"object", "object"},
         {"string", "str"},
     };
-
-    private static readonly string _arrayConversion = "list[{0}]";
 
     public PythonLinker(string[] data) : base(data)
     {
@@ -67,7 +67,7 @@ internal sealed class PythonLinker : Linker
         var format = new StringBuilder();
 
         // Add '@dataclass' attribute
-        format.Append($"@dataclass\n{GetCurrentIndent()}");
+        //format.Append($"@dataclass\n{GetCurrentIndent()}");
 
         // Add 'class' keyword
         format.Append("class ");
@@ -257,7 +257,7 @@ internal sealed class PythonLinker : Linker
             ConvertProperty(classComponent);
 
             // Build fields
-            ConstructFields(classComponent.Fields);
+            //ConstructFields(classComponent.Fields);
 
             // Build methods
             ConstructMethods(classComponent.Methods);
@@ -352,29 +352,33 @@ internal sealed class PythonLinker : Linker
     {
         // FORMATTING
 
+        // Imports
+        foreach (var import in _filePack.Imports)
+        {
+            Append(FormatImport(import));
+        }
+        Append();
+
         // Build containers
         var containers = _filePack.Containers;
-        foreach (var container in containers)
+        if (!containers.IsEmpty())
         {
-            // Remove accounted container
-            _filePack.RemoveComponent(container);
-            BuildContainer(container);
-
-            // Imports
-            foreach (var import in _filePack.Imports)
+            foreach (var container in containers)
             {
-                Append(FormatImport(import));
+                // Remove accounted container
+                _filePack.RemoveComponent(container);
+                BuildContainer(container);
+
+                // Build classes
+                ConstructClass(container.Classes);
             }
-            Append();
-
-            // Build classes
-            ConstructClass(container.Classes);
-
-            // Close scopes
-            while (_indentLevel != 0)
+        }
+        else
+        {
+            var classes = _filePack.Classes;
+            if (!classes.IsEmpty())
             {
-                DecrementIndent();
-                Append("}");
+                ConstructClass(classes);
             }
         }
 
@@ -459,30 +463,23 @@ internal sealed class PythonLinker : Linker
 
     #region Helpers
 
-    private static string TryConvertTypeToPython(string type)
+    private string TryConvertTypeToPython(string type)
     {
-        // Convert array types
-        var span = type.AsSpan();
-        var typeName = type;
-        var format = false;
-        var tryArrayIndex = span.IndexOf('[');
-        if (tryArrayIndex != -1)
-        {
-            typeName = span[..tryArrayIndex].ToString();
-            format = true;
-        }
+        if (!_useLanguageSpecifics) return type;
 
         // Convert type name
-        if (_commonTypeConversions.TryGetValue(typeName, out var pythonType))
+        if (_commonTypeConversions.TryGetValue(type, out var pythonType))
         {
-            return (!format) ? pythonType : string.Format(_arrayConversion, pythonType);
+            return pythonType;
         }
 
-        return (!format) ? type : string.Format(_arrayConversion, type);
+        return type;
     }
 
-    private static string ConvertMethodNameToPython(string name)
+    private string ConvertMethodNameToPython(string name)
     {
+        if (!_useLanguageSpecifics) return name;
+
         var span = name.AsSpan();
         var pythonName = span[0..1];
 

@@ -1,6 +1,6 @@
 ﻿namespace LanguageConvertor.Utility;
 
-public static class ICollectionExtensionMethods
+internal static class ICollectionExtensionMethods
 {
     public static bool IsEmpty<T>(this ICollection<T> collection)
     {

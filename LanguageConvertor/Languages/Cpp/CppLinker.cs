@@ -24,12 +24,6 @@ internal sealed class CppLinker : Linker
         {"string", "std::string"},
     };
 
-    private static readonly IEnumerable<string> _primitiveTypes = new HashSet<string>
-    {
-        "bool", "char", "int8_t", "int16_t", "int32_t",
-        "int64_t", "uint8_t", "uint16_t", "uint32_t", "uint64_t",
-    };
-
     private static readonly string _arrayConversion = "*";
 
     public CppLinker(string[] data) : base(data)

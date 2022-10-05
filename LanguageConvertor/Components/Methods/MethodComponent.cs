@@ -59,6 +59,16 @@ public sealed class MethodComponent : IComponent
         Body.AddRange(lines);
     }
 
+    public void AddParameter(in ParameterPack parameter)
+    {
+        Parameters.Add(parameter);
+    }
+
+    public void AddParameters(params ParameterPack[] parameters)
+    {
+        Parameters.AddRange(parameters);
+    }
+
     #endregion
 
     public override string ToString()

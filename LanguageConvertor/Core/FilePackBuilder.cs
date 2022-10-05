@@ -7,11 +7,6 @@ public sealed class FilePackBuilder
     private readonly FilePack _filePack;
     private readonly Stack<IComponent> _scopeStack;
     private readonly FileBuilderConfig _config;
-
-    public FilePackBuilder()
-    {
-        
-    }
     
     public FilePackBuilder(in FileBuilderConfig config)
     {
@@ -56,9 +51,11 @@ public sealed class FilePackBuilder
         _scopeStack.Pop();
     }
 
-    public void CreateConstructor(string name, string accessModifier = "public", string specialModifier = "", params ParameterPack[] parameters)
+    public void CreateConstructor(string accessModifier = "public", string specialModifier = "", params ParameterPack[] parameters)
     {
-        CreateMethod(name, string.Empty, accessModifier, specialModifier, null, parameters);
+        var classComponent = (ClassComponent)_scopeStack.Peek();
+        var constructorName = _config.ConstructorNameFormat(classComponent.Name);
+        CreateMethod(constructorName, string.Empty, accessModifier, specialModifier, parameters);
     }
     
     public void CreateInitializerConstructor(string accessModifier = "public", string specialModifier = "")
@@ -81,38 +78,114 @@ public sealed class FilePackBuilder
             var defaultFormat = _config.MemberInitializationFormat(field.Name, parameters[i].Name);
             body.Add(defaultFormat);
         }
-        
-        CreateMethod(classComponent.Name, string.Empty, accessModifier, specialModifier, body, parameters);
+
+        var constructorName = _config.ConstructorNameFormat(classComponent.Name);
+        CreateMethod(constructorName, string.Empty, accessModifier, specialModifier, body, parameters);
     }
     
     public void CreateDefaultConstructor(string accessModifier = "public", string specialModifier = "")
     {
         var classComponent = (ClassComponent) _scopeStack.Peek();
         var fields = classComponent.Fields;
-        
+
         var body = new List<string>();
-        for (var i = 0; i < fields.Count; i++)
+        if (fields != null)
         {
-            var field = fields[i];
-            var defaultFormat = _config.NewStackAllocationFormat(field.Type);
-            var assignmentFormat = _config.MemberInitializationFormat(field.Name, defaultFormat);
-            body.Add(assignmentFormat);
+            for (var i = 0; i < fields.Count; i++)
+            {
+                var field = fields[i];
+                var defaultFieldValue = string.Empty;
+
+                if (field.HasValue)
+                {
+                    defaultFieldValue = field.Value;
+                }
+                else
+                {
+                    defaultFieldValue = (field.IsPointer) ? _config.NewHeapAllocationFormat(field.Type) : _config.NewStackAllocationFormat(field.Type);
+                    defaultFieldValue = $"{defaultFieldValue}{_config.DefaultValueFormat()}";
+                }
+
+                var assignmentFormat = _config.MemberInitializationFormat(field.Name, defaultFieldValue);
+                body.Add(assignmentFormat);
+            }
         }
-        
-        CreateMethod(classComponent.Name, string.Empty, accessModifier, specialModifier, body);
+
+        var constructorName = _config.ConstructorNameFormat(classComponent.Name);
+        CreateMethod(constructorName, string.Empty, accessModifier, specialModifier, body);
     }
     
     public void CreateMethod(string name, string type, string accessModifier = "", string specialModifier = "", IEnumerable<string>? body = null, params ParameterPack[] parameters)
     {
-        var method = new MethodComponent(accessModifier, specialModifier, type, name, parameters);
+        var method = new MethodComponent(accessModifier, specialModifier, type, name);
 
         if (body != null)
         {
             method.AddToBody(body);
         }
 
+        if (parameters != null)
+        {
+            method.AddParameters(parameters);
+        }
+
         _filePack.AddMethod(method);
         
+        Feed(method);
+        _scopeStack.Pop();
+    }
+
+    public void CreateMethod(string name, string type, string accessModifier = "", string specialModifier = "", string singleLineBody = "", params ParameterPack[] parameters)
+    {
+        var method = new MethodComponent(accessModifier, specialModifier, type, name);
+
+        if (!string.IsNullOrEmpty(singleLineBody))
+        {
+            method.AddToBody(singleLineBody);
+        }
+
+        if (parameters != null)
+        {
+            method.AddParameters(parameters);
+        }
+
+        _filePack.AddMethod(method);
+
+        Feed(method);
+        _scopeStack.Pop();
+    }
+
+    public void CreateMethod(string name, string type, string accessModifier = "", string specialModifier = "", string singleLineBody = "", ParameterPack? parameter = null)
+    {
+        var method = new MethodComponent(accessModifier, specialModifier, type, name);
+
+        if (!string.IsNullOrEmpty(singleLineBody))
+        {
+            method.AddToBody(singleLineBody);
+        }
+
+        if (parameter != null)
+        {
+            method.AddParameter(parameter);
+        }
+
+        _filePack.AddMethod(method);
+
+        Feed(method);
+        _scopeStack.Pop();
+    }
+
+    public void CreateMethod(string name, string type, string accessModifier = "", string specialModifier = "", params ParameterPack[] parameters)
+    {
+        var method = new MethodComponent(accessModifier, specialModifier, type, name);
+
+        if (parameters != null)
+        {
+            method.AddParameters(parameters);
+        }
+
+        _filePack.AddMethod(method);
+
         Feed(method);
         _scopeStack.Pop();
     }
@@ -125,11 +198,6 @@ public sealed class FilePackBuilder
         Feed(field);
     }
     
-    #endregion
-
-    #region Configuration
-    
-
     #endregion
     
     #region Helper

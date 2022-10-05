@@ -45,13 +45,13 @@ internal sealed class JavaLinker : Linker
 
     protected override string FormatImport(in ImportComponent importComponent)
     {
-        return $"{GetImportKeyword()} {importComponent.Name}.*;";
+        return $"{GetImportKeyword()} {importComponent.Name};";
     }
 
     protected override string FormatContainer(in ContainerComponent containerComponent)
     {
         // Format container
-        return $"{GetContainerKeyword()} {containerComponent.Name}.Java;";
+        return $"{GetContainerKeyword()} {containerComponent.Name};";
     }
 
     protected override string FormatClass(in ClassComponent classComponent)

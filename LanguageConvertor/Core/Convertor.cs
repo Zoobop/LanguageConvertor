@@ -7,6 +7,7 @@ public sealed class Convertor
     private readonly string _filePath;
     private readonly string[] _fileData;
     private readonly ConvertibleLanguage _language;
+    private readonly IEnumerable<string> _convertedData;
 
     internal Linker Linker { get; }
 
@@ -27,6 +28,8 @@ public sealed class Convertor
             ConvertibleLanguage.Cpp => new CppLinker(_fileData),
             _ => new JavaLinker(_fileData)
         };
+
+        _convertedData = Linker.BuildFileLines();
     }
     
     public Convertor(string[] data, ConvertibleLanguage language)
@@ -41,6 +44,8 @@ public sealed class Convertor
             ConvertibleLanguage.Cpp => new CppLinker(_fileData),
             _ => new JavaLinker(_fileData)
         };
+
+        _convertedData = Linker.BuildFileLines();
     }
 
     public Convertor(in FilePack filePack)
@@ -55,11 +60,13 @@ public sealed class Convertor
             ConvertibleLanguage.Cpp => new CppLinker(filePack),
             _ => new JavaLinker(filePack)
         };
+
+        _convertedData = Linker.BuildFileLines();
     }
 
     public IEnumerable<string> GetDataAsLines()
     {
-        return Linker.BuildFileLines();
+        return _convertedData;
     }
 
     public string GetData()
@@ -88,5 +95,19 @@ public sealed class Convertor
         var convertedData = GetDataAsLines();
         var completePath = $"{exportPath}{fileName}{extension}";
         File.WriteAllLines(completePath, convertedData);
-    } 
+    }
+
+    public void ToFile(string fileName, string exportPath)
+    {
+        var extension = _language switch
+        {
+            ConvertibleLanguage.Python => ".py",
+            ConvertibleLanguage.Cpp => ".hpp",
+            _ => ".java"
+        };
+
+        var convertedData = GetDataAsLines();
+        var completePath = $"{exportPath}{fileName}{extension}";
+        File.WriteAllLines(completePath, convertedData);
+    }
 }

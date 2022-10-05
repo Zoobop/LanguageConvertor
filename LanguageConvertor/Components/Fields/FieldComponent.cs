@@ -20,7 +20,7 @@ public sealed class FieldComponent : IComponent
     public bool IsPrivate => AccessModifier is "private" or null;
     public bool IsPublic => AccessModifier == "public";
     public bool IsProtected => AccessModifier == "protected";
-    public bool HasValue => string.IsNullOrEmpty(Value);
+    public bool HasValue => !string.IsNullOrEmpty(Value);
 
     public FieldComponent()
     {
