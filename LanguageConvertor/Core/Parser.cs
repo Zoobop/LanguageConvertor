@@ -52,7 +52,7 @@ internal sealed class Parser
                 var method = ParseMethod(line);
 
                 // Get method body if applicable
-                if (!method.IsAbstract)
+                if (!IsMethodAbstract(method))
                 {
                     var methodBody = GetMethodBody(data, ref i);
                     method.AddToBody(methodBody);
@@ -60,6 +60,7 @@ internal sealed class Parser
 
                 FilePack.AddMethod(method);
                 Feed(method);
+                _scopeStack.Pop();
             }
             // END SCOPE
             else if (IsEndScope(line))
@@ -116,7 +117,7 @@ internal sealed class Parser
     }
     private static bool IsClass(in string line)
     {
-        return line.Contains(" class ");
+        return line.Contains(" class ") || line.Contains(" interface ") || line.Contains(" enum ") || line.Contains(" struct ");
     }
     private static bool IsMethod(in string line)
     {
@@ -181,6 +182,7 @@ internal sealed class Parser
         span = span.Trim();
 
         var accessor = string.Empty;
+        var type = string.Empty;
         var special = string.Empty;
         var name = string.Empty;
         var parent = string.Empty;
@@ -195,7 +197,7 @@ internal sealed class Parser
             //Console.WriteLine($"[{accessor}]");
             span = span[length..];
         }
-        
+
         // Try get special
         var hasSpecial = span.StartsWith("static") || span.StartsWith("sealed") || span.StartsWith("abstract");
         if (hasSpecial)
@@ -206,9 +208,15 @@ internal sealed class Parser
             span = span[length..];
         }
 
-        // Skip 'class' keyword
-        var classIndex = span.IndexOf(' ');
-        span = span[++classIndex..];
+        // Try get accessor
+        var hasType = span.StartsWith("class") || span.StartsWith("struct") || span.StartsWith("interface") || span.StartsWith("enum");
+        if (hasType)
+        {
+            var length = span.IndexOf(' ');
+            type = span[..length++].ToString();
+            //Console.WriteLine($"[{accessor}]");
+            span = span[length..];
+        }
 
         // Get name
         var tryNameIndex = span.IndexOf(' ');
@@ -264,7 +272,7 @@ internal sealed class Parser
             }
         }
 
-        return new ClassComponent(accessor, special, name, parent, interfaces);
+        return new ClassComponent(accessor, type, special, name, parent, interfaces);
     }
 
     private static FieldComponent ParseField(in string line)
@@ -501,6 +509,21 @@ internal sealed class Parser
 
     #region Helpers
 
+    private bool IsMethodAbstract(in MethodComponent methodComponent)
+    {
+        if (_scopeStack.TryPeek(out var component))
+        {
+            var classComponent = (ClassComponent)component;
+            if (classComponent != null && classComponent.IsInterface)
+            {
+                methodComponent.IsInterfaceAbstract = true;
+                return true;
+            }
+        }
+
+        return methodComponent.IsAbstract;
+    }
+
     private static List<string> GetMethodBody(in string[] data, ref int index)
     {
         var methodBody = new List<string>();
@@ -523,14 +546,11 @@ internal sealed class Parser
             if (scopeCount == 0) break;
 
             var formattedLine = $"{indent}{line}".Trim();
-            if (!string.IsNullOrEmpty(formattedLine))
-            {
-                methodBody.Add(formattedLine);
-            }
+            methodBody.Add(formattedLine);
         }
 
         // Rewind to method end scope to pop off scope stack
-        index -= 2;
+        //index -= 2;
         return methodBody;
     }
 

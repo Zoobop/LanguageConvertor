@@ -327,7 +327,7 @@ internal sealed class PythonLinker : Linker
             if (property.CanRead)
             {
                 var methodComponent = new MethodComponent(property.AccessModifier, property.SpecialModifier, property.Type, $"get{property.Name}");
-                methodComponent.AddToBody($"return {fieldComponent.Name}");
+                methodComponent.AddToBody($"return self.{fieldComponent.Name}");
                 classComponent.AddMethod(methodComponent);
             }
 
@@ -418,6 +418,11 @@ internal sealed class PythonLinker : Linker
 
     private void BuildMethod(in MethodComponent methodComponent)
     {
+        if (methodComponent.Type == "void")
+        {
+            methodComponent.Type = "None";
+        }
+
         var formatMethod = FormatMethod(methodComponent);
 
         // Write formatted data

@@ -503,21 +503,33 @@ internal sealed class CppLinker : Linker
 
     private void BuildMethod(in MethodComponent methodComponent)
     {
-        var formatMethod = FormatMethod(methodComponent);
-
         // Write formatted data
-        Append(formatMethod);
-        Append("{"); // Enter scope
-        IncrementIndent();
-
-        // Method body
-        foreach (var line in methodComponent.Body)
+        if (!(methodComponent.IsAbstract && methodComponent.IsInterfaceAbstract))
         {
-            Append(line);
-        }
+            var formatMethod = FormatMethod(methodComponent);
+            Append(formatMethod);
+            Append("{"); // Enter scope
+            IncrementIndent();
 
-        DecrementIndent();
-        Append("}"); // Exit scope
+            // Method body
+            foreach (var line in methodComponent.Body)
+            {
+                if (line.Contains("}")) DecrementIndent();
+            
+                Append(line);
+            
+                if (line.Contains("{")) IncrementIndent();
+            }
+
+            DecrementIndent();
+            Append("}"); // Exit scope
+        }
+        else
+        {
+            methodComponent.SpecialModifier = "virtual";
+            var formatMethod = FormatMethod(methodComponent);
+            Append($"{formatMethod} = 0;");
+        }
         Append();
     }
 

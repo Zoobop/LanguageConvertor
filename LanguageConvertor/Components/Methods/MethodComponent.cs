@@ -19,7 +19,8 @@ public sealed class MethodComponent : IComponent
     public bool IsPrivate { get => AccessModifier is "private" or null; }
     public bool IsPublic { get => AccessModifier == "public"; }
     public bool IsProtected { get => AccessModifier == "protected"; }
-    public bool IsAbstract { get => SpecialModifier == "abstract"; }
+    public bool IsAbstract { get => SpecialModifier == "abstract" || IsInterfaceAbstract; }
+    public bool IsInterfaceAbstract { get; set; } = false;
     public bool IsOverride { get => SpecialModifier == "override"; }
     public bool IsConstructor { get => string.IsNullOrEmpty(Type); }
     public bool IsVoid { get => Type == "void"; }

@@ -9,6 +9,7 @@ namespace LanguageConvertor.Components;
 public sealed class ClassComponent : IComponent
 {
     public string AccessModifier { get; set; } = string.Empty;
+    public string ClassType { get; set; } = string.Empty;
     public string SpecialModifier { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string ParentClass { get; set; } = string.Empty;
@@ -22,6 +23,9 @@ public sealed class ClassComponent : IComponent
     public bool IsPrivate { get => AccessModifier is "private" or null; }
     public bool IsPublic { get => AccessModifier == "public"; }
     public bool IsProtected { get => AccessModifier == "protected"; }
+    public bool IsInterface { get => ClassType == "interface"; }
+    public bool IsStruct { get => ClassType == "struct"; }
+    public bool IsEnum { get => ClassType == "enum"; }
 
     public ClassComponent()
     {
@@ -36,9 +40,10 @@ public sealed class ClassComponent : IComponent
         Interfaces = new List<string>(interfaces);
     }
     
-    public ClassComponent(string accessModifier, string specialModifier, string name, string parentClass, List<string> interfaces)
+    public ClassComponent(string accessModifier, string type, string specialModifier, string name, string parentClass, List<string> interfaces)
     {
         AccessModifier = accessModifier;
+        ClassType = type;
         SpecialModifier = specialModifier;
         Name = name;
         ParentClass = parentClass;
